@@ -24,12 +24,14 @@ int init_udm_cache(void){
     shared_cache->cache_dev.bdev_name[SHM_BDEV_NAME_SIZE - 1] = '\0'; // make sure string is null-terminated
     shared_cache->cache_dev.block_size = 512;
 	shared_cache->cache_dev.device_size = 10000;
-	shared_cache->cache_dev.cache_block_num = 16;
+	shared_cache->cache_dev.cache_block_num = 1<<6;
 	shared_cache->cache_dev.blocks_per_page = 8;
 	shared_cache->cache_dev.blocks_per_cache_block = 64;
 
-    init_mapping(&shared_cache->cache_map, shared_cache->cache_dev.block_size, shared_cache->cache_dev.cache_block_num);
-    return 0;
+    int rc = 0;
+    rc += init_mapping(&shared_cache->cache_map, shared_cache->cache_dev.block_size, shared_cache->cache_dev.cache_block_num);
+    
+    return rc;
 }
 
 int link_udm_cache(void){
@@ -45,12 +47,16 @@ int link_udm_cache(void){
         return -1;
     }
 
+
     if(strcmp(shared_cache->cache_dev.bdev_name, BDEV_NAME) != 0){
         printf("link fail\n");
         free_udm_cache();
         return -1;
     }
-    return 0;
+
+    int rc = 0;
+    rc += link_mapping(&shared_cache->cache_map);
+    return rc;
 }
 
 int free_udm_cache(void){
