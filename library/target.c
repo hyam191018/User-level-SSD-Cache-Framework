@@ -44,6 +44,8 @@ static int map_pio(struct cache* cache, struct pio* pio) {
     }
 }
 
+/* --------------------------------------------------- */
+
 int _submit_pio(struct cache* cache, struct pio* pio) {
     if (pio->operation == DISCARD) {
         return 1;
