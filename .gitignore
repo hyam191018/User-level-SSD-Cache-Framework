@@ -1,0 +1,8 @@
+*.o
+*.d
+*.0
+*.pc
+*.sh
+.vscode
+main*
+testfile
