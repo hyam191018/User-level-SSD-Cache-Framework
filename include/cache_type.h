@@ -7,6 +7,8 @@
  *	Description: udm-cache核心資料結構, cache與mapping
  */
 
+#include "atomic.h"
+
 struct entry {
 	unsigned hash_next;
 	unsigned prev;
@@ -44,6 +46,7 @@ struct hash_table {
 };
 
 typedef struct {
+	spinlock mapping_lock;
 	unsigned block_size;
 	unsigned cblock_num;
 
