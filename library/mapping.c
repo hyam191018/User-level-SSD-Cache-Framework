@@ -144,6 +144,89 @@ static void init_allocator(struct entry_alloc *ea, struct entry_space *es, unsig
 	}
 }
 
+static void link_allocator(struct entry_alloc *ea, struct entry_space *es){
+	ea->es = es;
+}
+
+static void init_entry(struct entry *e){
+	e->hash_next = INDEXER_NULL;
+	e->prev = INDEXER_NULL;
+	e->next = INDEXER_NULL;
+	e->param = 0;
+	memset(e->full_path_name, 0, MAX_PATH_SIZE);
+	e->cache_page = INDEXER_NULL;
+}
+
+static void entry_set_pending(struct entry *e, int pending){
+	if(pending){
+		e->param |= 1;
+	}else{
+		e->param &= 0;
+	}
+}
+
+static int entry_get_pending(struct entry *e){
+	unsigned n = e->param;
+	return (n << 15) >> 15;
+}
+
+static void entry_set_alloc(struct entry *e, int alloc){
+	if(alloc){
+		e->param |= 2;
+	}else{
+		e->param &= ~2;
+	}
+}
+
+static void entry_set_dirty(struct entry *e, int dirty){
+	if(dirty){
+		e->param |= 4;
+	}else{
+		e->param &= ~4;
+	}
+}
+
+static int entry_get_dirty(struct entry *e){
+	unsigned n = e->param;
+	return (n << 13) >> 15;
+}
+
+static struct entry *alloc_entry(struct entry_alloc *ea){
+	struct entry *e;
+
+	if (l_empty(&ea->free))
+		return NULL;
+
+	e = l_pop_head(ea->es, &ea->free);
+	init_entry(e);
+	ea->nr_allocated++;
+
+	return e;
+}
+
+static void free_entry(struct entry_alloc *ea, struct entry *e){
+	ea->nr_allocated--;
+	entry_set_alloc(e, false);
+	l_add_tail(ea->es, &ea->free, e);
+}
+
+static int allocator_empty(struct entry_alloc *ea){
+	return l_empty(&ea->free);
+}
+
+
+static unsigned get_index(struct entry_alloc *ea, struct entry *e){
+	return to_index(ea->es, e) - ea->begin;
+}
+
+static struct entry *get_entry(struct entry_alloc *ea, unsigned index){
+	return __get_entry(ea->es, ea->begin + index);
+}
+
+static unsigned infer_cblock(mapping *mapping, struct entry *e){
+	return get_index(&mapping->cache_alloc, e);
+}
+
 /* --------------------------------------------------- */
 
 /* 演算法是用chatGPT產生的: djb2 hash */
@@ -237,7 +320,6 @@ static void h_insert(struct hash_table *ht, struct entry *e){
 static struct entry *__h_lookup(struct hash_table *ht, unsigned h, char* full_path_name, unsigned cache_page, struct entry **prev){
 
 	struct entry *e;
-
 	*prev = NULL;
 	for (e = h_head(ht, h); e; e = h_next(ht, e)) {
 		if ( (cache_page == e->cache_page) && strcmp(full_path_name,e->full_path_name) == 0)
@@ -245,7 +327,6 @@ static struct entry *__h_lookup(struct hash_table *ht, unsigned h, char* full_pa
 
 		*prev = e;
 	}
-
 	return NULL;
 }
 
@@ -325,6 +406,7 @@ int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
 int link_mapping(mapping* mapping){
 	spinlock_lock(&mapping->mapping_lock);
     int rc = 0;
+	link_allocator(&mapping->cache_alloc, &mapping->es);
     rc += alloc_es(&mapping->es, mapping->cblock_num);
 	rc += link_hash_table(&mapping->table, &mapping->es, mapping->cblock_num);
 	spinlock_unlock(&mapping->mapping_lock);
@@ -353,7 +435,59 @@ void info_mapping(mapping* mapping){
     printf("/ free  entrys = %u\n", mapping->cache_alloc.free.nr_elts);
 	printf("/ clean entrys = %u\n", mapping->clean.nr_elts);
 	printf("/ dirty entrys = %u\n", mapping->dirty.nr_elts);
-	unsigned hit_ratio = safe_div(mapping->hit_time * 100, mapping->hit_time + mapping->miss_time);
-    printf("MSG: hit time = %u, miss time = %u, hit ratio = %u%%\n",mapping->hit_time, mapping->miss_time, hit_ratio);
+	unsigned hit_ratio = safe_div((mapping->hit_time * 100), (mapping->hit_time + mapping->miss_time));
+    printf("/ hit time = %u, miss time = %u, hit ratio = %u%%\n",mapping->hit_time, mapping->miss_time, hit_ratio);
 	spinlock_unlock(&mapping->mapping_lock);
+}
+
+#define to_cache_page(page_index) (page_index >> 3)
+
+int lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock){
+	spinlock_lock(&mapping->mapping_lock);
+	struct entry* e;
+	e = h_lookup(&mapping->table, full_path_name, to_cache_page(page_index));
+	if(e){
+		mapping->hit_time++;
+		/* cache hit: get cblock */
+		*cblock = infer_cblock(mapping, e);
+	}else{
+		mapping->miss_time++;
+	}
+
+	spinlock_unlock(&mapping->mapping_lock);
+	return e ? 1 : 0;
+}
+
+int insert_mapping(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock){
+	spinlock_lock(&mapping->mapping_lock);
+	struct entry* e;
+	e = h_lookup(&mapping->table, full_path_name, to_cache_page(page_index));
+
+	/* exist */
+	if(e){
+		spinlock_unlock(&mapping->mapping_lock);
+		return 0;
+	}
+
+	e = alloc_entry(&mapping->cache_alloc);
+	/* no free entry */
+	if(!e){
+		spinlock_unlock(&mapping->mapping_lock);
+		return 0;
+	}
+	init_entry(e);
+	strcpy(e->full_path_name, full_path_name);
+	e->cache_page = to_cache_page(page_index);
+
+	entry_set_dirty(e, true);
+	entry_set_alloc(e, true);
+	entry_set_pending(e, true);
+	h_insert(&mapping->table, e);
+	l_add_tail(&mapping->es, &mapping->dirty, e);
+
+	*cblock = infer_cblock(mapping, e);
+	printf("Insert %s, %u to cblock %u\n", e->full_path_name,  e->cache_page, *cblock);
+
+	spinlock_unlock(&mapping->mapping_lock);
+	return 1;
 }

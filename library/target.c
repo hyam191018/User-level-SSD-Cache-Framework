@@ -1,16 +1,17 @@
 #include "target.h"
+#include "mapping.h"
 #include "stdinc.h"
 
 
 /* --------------------------------------------------- */
 
 static int map_to_cache(struct cache* cache, struct pio* pio, unsigned cblock){
-    printf("MSG: map to cache\n");
+    // printf("MSG: map to cache\n");
     return 0;
 }
 
 static int map_to_origin(struct cache* cache, struct pio* pio){
-    printf("MSG: map to origin\n");
+    // printf("MSG: map to origin\n");
     return 0;
 }
 
@@ -35,21 +36,22 @@ static int map_pio(struct cache* cache, struct pio* pio){
     }
 
     unsigned cblock = 0;
-    int hit = false; // lookup_mapping(cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
+    int hit = lookup_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
 
-    if(hit){
+    if(hit == true){
         return map_to_cache(cache, pio, cblock);
+
     }else if(optimizable(pio)){
-        printf("MSG: optimizable\n");
-        int res = false; // insert_mapping(cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
+        int res = insert_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
         if(res){
             return map_to_cache(cache, pio, cblock);
         }else{
-            /* SSD is full */
             return map_to_origin(cache, pio);
         }
+
     }else{
         return map_to_origin(cache, pio);
+
     }
 
     return -1;
