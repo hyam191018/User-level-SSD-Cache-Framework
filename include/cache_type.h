@@ -8,6 +8,7 @@
  */
 
 #include "atomic.h"
+#include "config.h"
 
 struct entry {
 	unsigned hash_next;
@@ -17,7 +18,8 @@ struct entry {
 	/* dirty 1, allocated 1, pending_work 1 */
 	unsigned short param;	
 
-	char* full_path_name;
+	/* todo */
+	char full_path_name[MAX_PATH_SIZE];
 	unsigned cache_page;
 };
 
