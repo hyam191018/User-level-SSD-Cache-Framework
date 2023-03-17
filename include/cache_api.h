@@ -12,13 +12,13 @@
 #include "pio.h"
 
 /* in udm_cache.c */
-int init_udm_cache(void);  // open and init
+int init_udm_cache(void);  // open and init: return 0 if success
 int link_udm_cache(void);  // opan and map
 int free_udm_cache(void);  // unmap
 int exit_udm_cache(void);  // unlink
 void info_udm_cache(void);
 
-int submit_pio(struct pio* pio);
+int submit_pio(struct pio* pio); // return 0 if success
 void writeback(void);
 
 #endif
