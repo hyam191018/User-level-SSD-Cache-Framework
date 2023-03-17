@@ -27,7 +27,6 @@ typedef enum { false, true } bool;
 #define BDEV_NAME "Nvme0n1"
 #define JSON_CONFIG "bdev.json"
 
-
 /* may increase hit ratio */
 #define unlikely(x) __builtin_expect(!!(x), 0)
 

@@ -12,10 +12,10 @@
 /* pio is a linked list, it should be aligned to cache block size (32KB) */
 struct pio{
 	char* full_path_name;	
-	unsigned page_index;	/* file offset = page_index * page_size */
-	operate operation;	/* READ, WRITE */
-	void* buffer;		/* user memory space */
-	unsigned pio_cnt;	/* pio nodes count */
+	unsigned page_index;	// file offset = page_index * page_size
+	operate operation;	// READ, WRITE, DISCARD
+	void* buffer;		// user memory space
+	unsigned pio_cnt;	// pio nodes count
 	struct pio* next;
 };
 

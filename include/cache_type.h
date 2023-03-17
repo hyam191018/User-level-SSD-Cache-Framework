@@ -4,7 +4,7 @@
 /*
  *	Author: Hyam
  *	Date: 2023/03/17
- *	Description: udm-cache核心資料結構, cache與mapping
+ *	Description: udm-cache核心資料結構, cache 與 mapping
  */
 
 #include "atomic.h"
@@ -14,11 +14,7 @@ struct entry {
 	unsigned hash_next;
 	unsigned prev;
 	unsigned next;
-
-	/* dirty 1, allocated 1, pending_work 1 */
-	unsigned short param;	
-
-	/* todo */
+	unsigned short param:3;	// dirty 1, allocated 1, pending_work 1 
 	char full_path_name[MAX_PATH_SIZE];
 	unsigned cache_page;
 };
@@ -64,16 +60,16 @@ typedef struct {
 
 typedef struct {
 	char* bdev_name;
-	unsigned block_size;			/* default 512 bytes */
-	unsigned device_size;			/* block number */
-	unsigned cache_block_num;		/* cache block (32KB) */
-	unsigned blocks_per_page;		/* 4KB / 512 = 8 */
-	unsigned blocks_per_cache_block;	/* 32KB / 512 = 64 */
+	unsigned block_size;			// default 512 bytes
+	unsigned device_size;			// block number
+	unsigned cache_block_num;		// cache block (32KB)
+	unsigned blocks_per_page;		// 4KB / 512 = 8
+	unsigned blocks_per_cache_block;	// 32KB / 512 = 64
 } device;
 
 struct cache {
-	device cache_dev;		/* SSD info */
-	mapping cache_map;		/* mapping table */
+	device cache_dev;		// SSD info
+	mapping cache_map;		// mapping table
 };
 
 

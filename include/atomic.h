@@ -10,7 +10,7 @@
 #include <stdatomic.h>
 
 typedef struct {
-    atomic_int locked;  // 使用 atomic_int 定義 locked 變數
+    atomic_int locked;
 } spinlock;
 
 /* in atomic.c */

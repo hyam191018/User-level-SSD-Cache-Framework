@@ -21,10 +21,4 @@ void info_udm_cache(void);
 int submit_pio(struct pio* pio);
 void writeback(void);
 
-// defined in pio.h already
-// struct pio* create_pio(char* full_path_name, unsigned page_index, operate operation, void* buffer, unsigned pio_cnt);
-// void append_pio(struct pio* head, void* buffer);
-// void free_pio(struct pio* head);
-// void print_pio(struct pio* head);
-
 #endif
