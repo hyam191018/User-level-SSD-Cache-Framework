@@ -14,6 +14,8 @@ typedef enum { false, true } bool;
 #define CACHE_BLOCK_SIZE (1<<15)
 #define PAGE_SIZE (1<<12)
 
+#define MAX_PATH_SIZE 32
+
 /* share memory */
 #define SHM_CACHE_NAME "/udm_cache"
 #define SHM_BDEV_NAME_SIZE 10
@@ -25,10 +27,11 @@ typedef enum { false, true } bool;
 #define BDEV_NAME "Nvme0n1"
 #define JSON_CONFIG "bdev.json"
 
+
 /* may increase hit ratio */
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 /* instead of a/b*/
-#define safe_div(a, b) ((b != 0) ? (a / b) : 0)
+#define safe_div(a, b) ((b != 0 ) ? (a / b) + !!(a % b) : 0)
 
 #endif
