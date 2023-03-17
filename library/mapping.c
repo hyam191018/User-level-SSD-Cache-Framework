@@ -10,15 +10,15 @@
 static int alloc_es(struct entry_space *es, unsigned nr_entries){
     es->begin = alloc_shm(SHM_ENTRY_SPACE, sizeof(struct entry) * nr_entries);
     if(!es->begin){
-        perror("alloc_es");
-        return -1;
+        perror("alloc_shm");
+        return 1;
     }
 	es->end = es->begin + nr_entries;
 	return 0;
 }
 
 static int unmap_es(struct entry_space *es, unsigned nr_entries){
-    if(!es->begin || !nr_entries ) return -1;
+    if( !es->begin || !nr_entries ) return 1;
     return unmap_shm(es->begin, sizeof(struct entry) * nr_entries);
 }
 
@@ -263,8 +263,8 @@ static int alloc_hash_table(struct hash_table *ht, struct entry_space *es, unsig
 	ht->hash_bits = 31 - __builtin_clz(nr_buckets);
     ht->buckets = alloc_shm(SHM_BUCKETS, nr_buckets * sizeof(*ht->buckets));
     if(!ht->buckets){
-        perror("alloc buckets");
-        return -1;
+        perror("alloc_shm");
+        return 1;
     }
 
 	for (i = 0; i < nr_buckets; i++)
@@ -282,8 +282,8 @@ static int link_hash_table(struct hash_table *ht, struct entry_space *es, unsign
 	ht->hash_bits = 31 - __builtin_clz(nr_buckets);
     ht->buckets = alloc_shm(SHM_BUCKETS, nr_buckets * sizeof(*ht->buckets));
     if(!ht->buckets){
-        perror("alloc buckets");
-        return -1;
+        perror("alloc_shm");
+        return 1;
     }
     
     return 0;
@@ -291,7 +291,7 @@ static int link_hash_table(struct hash_table *ht, struct entry_space *es, unsign
 
 static int unmap_hash_table(struct hash_table *ht, unsigned nr_entries){
     unsigned nr_buckets = roundup_pow_of_two(nr_entries);
-    if(!ht->buckets || !nr_entries) return -1;
+    if( !ht->buckets || !nr_entries ) return 1;
 	return unmap_shm(ht->buckets, nr_buckets * sizeof(*ht->buckets));
 }
 
@@ -374,15 +374,13 @@ static void h_remove(struct hash_table *ht, struct entry *e){
 
 int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
 	spinlock_lock(&mapping->mapping_lock);
+	int rc = 0;
     mapping->block_size = block_size;
     mapping->cblock_num = cblock_num;
 
-    int rc = 0;
-
     rc += alloc_es(&mapping->es, mapping->cblock_num);
     if(rc){
-		spinlock_unlock(&mapping->mapping_lock);
-        return rc;
+		goto err;
     }
     
 	init_allocator(&mapping->cache_alloc, &mapping->es, 0, mapping->cblock_num);
@@ -391,13 +389,13 @@ int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
 
     rc += alloc_hash_table(&mapping->table, &mapping->es, mapping->cblock_num);
     if(rc){
-		spinlock_unlock(&mapping->mapping_lock);
-        return rc;
+		goto err;
     }
 
     mapping->hit_time = 0;
     mapping->miss_time = 0;
 
+err:
 	spinlock_unlock(&mapping->mapping_lock);
     return rc;
 }
@@ -406,18 +404,32 @@ int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
 int link_mapping(mapping* mapping){
 	spinlock_lock(&mapping->mapping_lock);
     int rc = 0;
+
 	link_allocator(&mapping->cache_alloc, &mapping->es);
+
     rc += alloc_es(&mapping->es, mapping->cblock_num);
+	if(rc){
+		goto err;
+    }
+
 	rc += link_hash_table(&mapping->table, &mapping->es, mapping->cblock_num);
+
+err:
 	spinlock_unlock(&mapping->mapping_lock);
     return rc;
 }
 
 int free_mapping(mapping* mapping){
-    int rc = 0;
 	spinlock_lock(&mapping->mapping_lock);
+    int rc = 0;
     rc += unmap_es(&mapping->es, mapping->cblock_num);
+	if(rc){
+		goto err;
+    }
+
     rc += unmap_hash_table(&mapping->table, mapping->cblock_num);
+
+err:
 	spinlock_unlock(&mapping->mapping_lock);
     return rc;
 }
@@ -486,7 +498,6 @@ int insert_mapping(mapping *mapping, char *full_path_name, unsigned page_index, 
 	l_add_tail(&mapping->es, &mapping->dirty, e);
 
 	*cblock = infer_cblock(mapping, e);
-	printf("Insert %s, %u to cblock %u\n", e->full_path_name,  e->cache_page, *cblock);
 
 	spinlock_unlock(&mapping->mapping_lock);
 	return 1;

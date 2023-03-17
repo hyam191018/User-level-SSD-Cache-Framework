@@ -28,7 +28,7 @@ static int optimizable(struct pio* pio) {
 static int map_pio(struct cache* cache, struct pio* pio) {
     if (!check_pio(pio)) {
         printf("MSG: check pio fail\n");
-        return -1;
+        return 1;
     }
 
     unsigned cblock = 0;
@@ -46,7 +46,7 @@ static int map_pio(struct cache* cache, struct pio* pio) {
 
 int _submit_pio(struct cache* cache, struct pio* pio) {
     if (pio->operation == DISCARD) {
-        return -1;
+        return 1;
     }
 
     return map_pio(cache, pio);
