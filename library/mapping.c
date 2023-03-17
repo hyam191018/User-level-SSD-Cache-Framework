@@ -292,6 +292,7 @@ static void h_remove(struct hash_table *ht, struct entry *e){
 /* --------------------------------------------------- */
 
 int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
+	spinlock_lock(&mapping->mapping_lock);
     mapping->block_size = block_size;
     mapping->cblock_num = cblock_num;
 
@@ -299,6 +300,7 @@ int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
 
     rc += alloc_es(&mapping->es, mapping->cblock_num);
     if(rc){
+		spinlock_unlock(&mapping->mapping_lock);
         return rc;
     }
     
@@ -308,28 +310,33 @@ int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
 
     rc += alloc_hash_table(&mapping->table, &mapping->es, mapping->cblock_num);
     if(rc){
+		spinlock_unlock(&mapping->mapping_lock);
         return rc;
     }
 
     mapping->hit_time = 0;
     mapping->miss_time = 0;
 
+	spinlock_unlock(&mapping->mapping_lock);
     return rc;
 }
 
 
 int link_mapping(mapping* mapping){
+	spinlock_lock(&mapping->mapping_lock);
     int rc = 0;
     rc += alloc_es(&mapping->es, mapping->cblock_num);
 	rc += link_hash_table(&mapping->table, &mapping->es, mapping->cblock_num);
-
+	spinlock_unlock(&mapping->mapping_lock);
     return rc;
 }
 
 int free_mapping(mapping* mapping){
     int rc = 0;
+	spinlock_lock(&mapping->mapping_lock);
     rc += unmap_es(&mapping->es, mapping->cblock_num);
     rc += unmap_hash_table(&mapping->table, mapping->cblock_num);
+	spinlock_unlock(&mapping->mapping_lock);
     return rc;
 }
 
@@ -341,10 +348,12 @@ int exit_mapping(void){
 }
 
 void info_mapping(mapping* mapping){
+	spinlock_lock(&mapping->mapping_lock);
     printf("---> Information of mapping table <---\n");
     printf("/ free  entrys = %u\n", mapping->cache_alloc.free.nr_elts);
 	printf("/ clean entrys = %u\n", mapping->clean.nr_elts);
 	printf("/ dirty entrys = %u\n", mapping->dirty.nr_elts);
 	unsigned hit_ratio = safe_div(mapping->hit_time * 100, mapping->hit_time + mapping->miss_time);
     printf("MSG: hit time = %u, miss time = %u, hit ratio = %u%%\n",mapping->hit_time, mapping->miss_time, hit_ratio);
+	spinlock_unlock(&mapping->mapping_lock);
 }
