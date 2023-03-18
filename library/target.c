@@ -27,28 +27,23 @@ static int optimizable(struct pio* pio) {
 
 static int map_pio(struct cache* cache, struct pio* pio) {
     if (!check_pio(pio)) {
-        goto err;
+        return 1;
     }
+
     unsigned cblock;
+    bool hit_or_inserted = false;
 
     if (unlikely(optimizable(pio))) {
-        bool hit_or_success = lookup_mapping_with_insert(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
-        if(hit_or_success){
-            return map_to_cache(cache, pio, cblock);
-        }else{
-            return map_to_origin(cache, pio);
-        }
+        hit_or_inserted = lookup_mapping_with_insert(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
     } else {
-        bool hit = lookup_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
-        if(hit){
-            return map_to_cache(cache, pio, cblock);
-        }else{
-            return map_to_origin(cache, pio);
-        }
+        hit_or_inserted = lookup_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
     }
 
-err:
-    return 1;
+    if(hit_or_inserted){
+        return map_to_cache(cache, pio, cblock);
+    }
+
+    return map_to_origin(cache, pio);
 }
 
 /* --------------------------------------------------- */
