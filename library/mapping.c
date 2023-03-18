@@ -242,7 +242,6 @@ static unsigned hash_32(char* full_path_name, unsigned cache_page_index, unsigne
     }
 
 	hash_val = ( hash_val <<  (32 - hash_bits) ) >> (32 - hash_bits);
-	printf("val = %u\n", hash_val);
 	return hash_val;
 }
 
@@ -395,6 +394,9 @@ int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
 
     mapping->hit_time = 0;
     mapping->miss_time = 0;
+    mapping->promotion_time = 0;
+    mapping->demotion_time = 0;
+    mapping->writeback_time = 0;
 
 end:
 	spinlock_unlock(&mapping->mapping_lock);
@@ -457,6 +459,9 @@ void info_mapping(mapping* mapping){
 	printf("/ clean entrys = %u\n", mapping->clean.nr_elts);
 	printf("/ dirty entrys = %u\n", mapping->dirty.nr_elts);
 	unsigned hit_ratio = safe_div((mapping->hit_time * 100), (mapping->hit_time + mapping->miss_time));
+	printf("/ promotion time = %u\n", mapping->promotion_time);
+	printf("/ demotion  time = %u\n", mapping->demotion_time);
+	printf("/ writeback time = %u\n", mapping->writeback_time);
     printf("/ hit time = %u, miss time = %u, hit ratio = %u%%\n",mapping->hit_time, mapping->miss_time, hit_ratio);
 	list_entrys_info(mapping);
 	spinlock_unlock(&mapping->mapping_lock);
@@ -547,6 +552,7 @@ void promotion_complete(mapping* mapping, unsigned *cblock, bool success){
 		entry_set_dirty(e, false);
 		h_insert(&mapping->table, e);
 		l_add_tail(&mapping->es, &mapping->clean, e);
+		mapping->promotion_time++;
 	}else{
 		// !h, !q, a -> !h, !q, !a
 		free_entry(&mapping->ca, e);
@@ -583,6 +589,7 @@ void demotion_complete(mapping* mapping, unsigned *cblock, bool success){
 		// h, !q, a -> !h, !q, !a
 		h_remove(&mapping->table, e);
 		free_entry(&mapping->ca, e);
+		mapping->demotion_time++;
 	}else{
 		// h, !q, a -> h, q, a
 		l_add_head(&mapping->es, &mapping->clean, e);
@@ -616,6 +623,7 @@ void writeback_complete(mapping* mapping, unsigned *cblock, bool success){
 		// h, !q, a -> h, q, a
 		entry_set_dirty(e, false);
 		l_add_tail(&mapping->es, &mapping->clean, e);
+		mapping->writeback_time++;
 	}else{
 		// h, !q, a -> h, q, a
 		l_add_head(&mapping->es, &mapping->dirty, e);

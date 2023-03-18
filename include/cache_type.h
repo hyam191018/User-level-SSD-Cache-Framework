@@ -56,6 +56,10 @@ typedef struct {
 
 	unsigned hit_time;
 	unsigned miss_time;
+	unsigned promotion_time;
+	unsigned demotion_time;
+	unsigned writeback_time;
+
 } mapping;
 
 typedef struct {
