@@ -26,22 +26,30 @@ static int optimizable(struct pio* pio) {
 }
 
 static int map_pio(struct cache* cache, struct pio* pio) {
+    int rc = 0;
     if (!check_pio(pio)) {
-        printf("MSG: check pio fail\n");
-        return 1;
+        rc = 1;
+        goto err;
     }
 
     unsigned cblock = 0;
-    int hit = lookup_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
+    bool hit = lookup_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
 
     if (hit) {
-        return map_to_cache(cache, pio, cblock);
+        rc += map_to_cache(cache, pio, cblock);
     } else if (optimizable(pio)) {
-        int res = insert_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
-        return res ? map_to_cache(cache, pio, cblock) : map_to_origin(cache, pio);
+        bool success = insert_mapping_before_io(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
+        if(success){
+            rc += map_to_cache(cache, pio, cblock);
+            insert_mapping_after_io(&cache->cache_map, &cblock, rc == 0 ? true : false );
+        }else{
+            rc += map_to_origin(cache, pio);
+        }
     } else {
-        return map_to_origin(cache, pio);
+        rc += map_to_origin(cache, pio);
     }
+err:
+    return rc;
 }
 
 /* --------------------------------------------------- */
