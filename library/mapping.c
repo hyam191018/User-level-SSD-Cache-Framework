@@ -154,7 +154,7 @@ static void init_entry(struct entry *e){
 	e->next = INDEXER_NULL;
 	e->param = 0;
 	memset(e->full_path_name, 0, MAX_PATH_SIZE);
-	e->cache_page = INDEXER_NULL;
+	e->cache_page_index = INDEXER_NULL;
 }
 
 static void entry_set_pending(struct entry *e, bool pending){
@@ -229,12 +229,12 @@ static unsigned infer_cblock(mapping *mapping, struct entry *e){
 /* --------------------------------------------------- */
 
 /* 演算法是用chatGPT產生的: djb2 hash */
-static unsigned hash_32(char* full_path_name, unsigned cache_page, unsigned long long hash_bits){
+static unsigned hash_32(char* full_path_name, unsigned cache_page_index, unsigned long long hash_bits){
 	unsigned hash_val = 5381;
     int c;
 
     // hash the integer first
-    hash_val = ((hash_val << 5) + hash_val) + cache_page;
+    hash_val = ((hash_val << 5) + hash_val) + cache_page_index;
 
     // hash the string next
     while ((c = *full_path_name++)) {
@@ -242,6 +242,7 @@ static unsigned hash_32(char* full_path_name, unsigned cache_page, unsigned long
     }
 
 	hash_val = ( hash_val <<  (32 - hash_bits) ) >> (32 - hash_bits);
+	printf("val = %u\n", hash_val);
 	return hash_val;
 }
 
@@ -312,18 +313,18 @@ static void __h_insert(struct hash_table *ht, unsigned bucket, struct entry *e){
 }
 
 static void h_insert(struct hash_table *ht, struct entry *e){
-	unsigned h = hash_32(e->full_path_name, e->cache_page, ht->hash_bits);
+	unsigned h = hash_32(e->full_path_name, e->cache_page_index, ht->hash_bits);
 	__h_insert(ht, h, e);
 }
 
-static struct entry *__h_lookup(struct hash_table *ht, unsigned h, char* full_path_name, unsigned cache_page, struct entry **prev){
-
+static struct entry *__h_lookup(struct hash_table *ht, unsigned h, char* full_path_name, unsigned cache_page_index, struct entry **prev){
+	
 	struct entry *e;
 	*prev = NULL;
 	for (e = h_head(ht, h); e; e = h_next(ht, e)) {
-		if ( (cache_page == e->cache_page) && strcmp(full_path_name,e->full_path_name) == 0)
+		if ( (cache_page_index == e->cache_page_index) && (strcmp(full_path_name, e->full_path_name) == 0)){
 			return e;
-
+		}
 		*prev = e;
 	}
 	return NULL;
@@ -336,12 +337,12 @@ static void __h_unlink(struct hash_table *ht, unsigned h, struct entry *e, struc
 		ht->buckets[h] = e->hash_next;
 }
 
-static struct entry *h_lookup(struct hash_table *ht, char* full_path_name, unsigned cache_page){
+static struct entry *h_lookup(struct hash_table *ht, char* full_path_name, unsigned cache_page_index){
 
 	struct entry *e, *prev;
-	unsigned h = hash_32(full_path_name, cache_page, ht->hash_bits);
+	unsigned h = hash_32(full_path_name, cache_page_index, ht->hash_bits);
 
-	e = __h_lookup(ht, h, full_path_name, cache_page, &prev);
+	e = __h_lookup(ht, h, full_path_name, cache_page_index, &prev);
 	if (e && prev) {
 		/*
 		 * Move to the front because this entry is likely
@@ -356,14 +357,15 @@ static struct entry *h_lookup(struct hash_table *ht, char* full_path_name, unsig
 
 static void h_remove(struct hash_table *ht, struct entry *e){
 
-	unsigned h = hash_32(e->full_path_name, e->cache_page, ht->hash_bits);
+	unsigned h = hash_32(e->full_path_name, e->cache_page_index, ht->hash_bits);
 	struct entry *prev;
-
+	
 	/*
 	 * The down side of using a singly linked list is we have to
 	 * iterate the bucket to remove an item.
 	 */
-	e = __h_lookup(ht, h, e->full_path_name, e->cache_page, &prev);
+	e = __h_lookup(ht, h, e->full_path_name, e->cache_page_index, &prev);
+
 	if (e)
 		__h_unlink(ht, h, e, prev);
 }
@@ -441,10 +443,10 @@ int exit_mapping(void){
 }
 
 /* debug */
-void list_entrys_info(mapping* mapping){
-	for(int i=0;i<mapping->cblock_num;i++){
+static void list_entrys_info(mapping* mapping){
+	for(unsigned i=0;i<mapping->cblock_num;i++){
 		struct entry* e = mapping->es.begin + i;
-		printf("/ entry = %s and %u\n", e->full_path_name, e->cache_page);
+		printf("/ entry = %s and %u\n", e->full_path_name, e->cache_page_index);
 	}
 }
 
@@ -456,15 +458,15 @@ void info_mapping(mapping* mapping){
 	printf("/ dirty entrys = %u\n", mapping->dirty.nr_elts);
 	unsigned hit_ratio = safe_div((mapping->hit_time * 100), (mapping->hit_time + mapping->miss_time));
     printf("/ hit time = %u, miss time = %u, hit ratio = %u%%\n",mapping->hit_time, mapping->miss_time, hit_ratio);
-	// list_entrys_info(mapping);
+	list_entrys_info(mapping);
 	spinlock_unlock(&mapping->mapping_lock);
 }
 
-#define to_cache_page(page_index) (page_index >> 3)
+#define to_cache_page_index(page_index) (page_index >> 3)
 
 bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock){
     spinlock_lock(&mapping->mapping_lock);
-    struct entry* e = h_lookup(&mapping->table, full_path_name, to_cache_page(page_index));
+    struct entry* e = h_lookup(&mapping->table, full_path_name, to_cache_page_index(page_index));
 	if(e) {
 		mapping->hit_time++;
 		*cblock = infer_cblock(mapping, e);
@@ -479,7 +481,7 @@ bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index,
 bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock){
     spinlock_lock(&mapping->mapping_lock);
 	bool res = true;
-	struct entry* e = h_lookup(&mapping->table, full_path_name, to_cache_page(page_index));
+	struct entry* e = h_lookup(&mapping->table, full_path_name, to_cache_page_index(page_index));
 
 	if(e) {
 		mapping->hit_time++;
@@ -499,11 +501,10 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
     }
 
 	/* build new entry */
-    init_entry(e);
     entry_set_pending(e, false);
     entry_set_dirty(e, true);
     strcpy(e->full_path_name, full_path_name);
-    e->cache_page = to_cache_page(page_index);
+    e->cache_page_index = to_cache_page_index(page_index);
 
 	/* push into hash table*/
 	h_insert(&mapping->table, e);
@@ -515,3 +516,111 @@ end:
     return res;
 }
 
+bool promotion_get_free_cblock(mapping* mapping, char* full_path_name, unsigned cache_page_index, unsigned *cblock){
+	spinlock_lock(&mapping->mapping_lock);
+
+	bool res = true;
+	/* check whether the free list is empty */
+	if (allocator_empty(&mapping->ca)) {
+		res = false;
+		goto end;
+	}
+	
+	/* get entry form free list */
+	struct entry *e = alloc_entry(&mapping->ca);
+    strcpy(e->full_path_name, full_path_name);
+	e->cache_page_index = cache_page_index;
+	entry_set_pending(e, true);
+	*cblock = infer_cblock(mapping, e);
+end:
+	spinlock_unlock(&mapping->mapping_lock);
+	return res;
+}
+
+void promotion_complete(mapping* mapping, unsigned *cblock, bool success){
+	spinlock_lock(&mapping->mapping_lock);
+	struct entry *e = get_entry(&mapping->ca, *cblock);
+	entry_set_pending(e, false);
+
+	if(success){
+		// !h, !q, a -> h, q, a
+		entry_set_dirty(e, false);
+		h_insert(&mapping->table, e);
+		l_add_tail(&mapping->es, &mapping->clean, e);
+	}else{
+		// !h, !q, a -> !h, !q, !a
+		free_entry(&mapping->ca, e);
+	}
+	spinlock_unlock(&mapping->mapping_lock);
+}
+
+bool demotion_get_clean_cblock(mapping* mapping, unsigned *cblock){
+	spinlock_lock(&mapping->mapping_lock);
+
+	bool res = true;
+	/* get entry from clean list */
+	if(mapping->clean.nr_elts <= (mapping->cblock_num >> 1 )){
+		res = false;
+		goto end;
+	}
+	
+	/* get entry form clean list */
+	struct entry *e = l_pop_head(&mapping->es, &mapping->clean);
+	entry_set_pending(e, true);
+	*cblock = infer_cblock(mapping, e);
+end:
+	spinlock_unlock(&mapping->mapping_lock);
+	return res;
+}
+
+void demotion_complete(mapping* mapping, unsigned *cblock, bool success){
+	spinlock_lock(&mapping->mapping_lock);
+	
+	struct entry *e = get_entry(&mapping->ca, *cblock);
+	entry_set_pending(e, false);
+
+	if(success){
+		// h, !q, a -> !h, !q, !a
+		h_remove(&mapping->table, e);
+		free_entry(&mapping->ca, e);
+	}else{
+		// h, !q, a -> h, q, a
+		l_add_head(&mapping->es, &mapping->clean, e);
+	}
+	spinlock_unlock(&mapping->mapping_lock);
+}
+
+bool writeback_get_dirty_cblock(mapping* mapping, unsigned *cblock){
+	spinlock_lock(&mapping->mapping_lock);
+
+	bool res = true;
+	/* get entry from dirty list */
+	if(!mapping->dirty.nr_elts){
+		res = false;
+		goto end;
+	}
+	
+	struct entry *e = l_pop_head(&mapping->es, &mapping->dirty);
+	entry_set_pending(e, true);
+	*cblock = infer_cblock(mapping, e);
+end:
+	spinlock_unlock(&mapping->mapping_lock);
+	return res;
+}
+void writeback_complete(mapping* mapping, unsigned *cblock, bool success){
+	spinlock_lock(&mapping->mapping_lock);
+	struct entry *e = get_entry(&mapping->ca, *cblock);
+	entry_set_pending(e, false);
+
+	if(success){
+		// h, !q, a -> h, q, a
+		entry_set_dirty(e, false);
+		l_add_tail(&mapping->es, &mapping->clean, e);
+	}else{
+		// h, !q, a -> h, q, a
+		l_add_head(&mapping->es, &mapping->dirty, e);
+	}
+	spinlock_unlock(&mapping->mapping_lock);
+}
+/*
+bool set_dirty_after_write(mapping* mapping, unsigned *cblock, bool dirty);*/
