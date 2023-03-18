@@ -14,7 +14,7 @@ struct entry {
 	unsigned hash_next;
 	unsigned prev;
 	unsigned next;
-	unsigned short param:3;	// dirty 1, allocated 1, pending_work 1 
+	unsigned short param:2;	// dirty 1, pending_work 1 
 	char full_path_name[MAX_PATH_SIZE];
 	unsigned cache_page;
 };
@@ -49,7 +49,7 @@ typedef struct {
 	unsigned cblock_num;
 
 	struct entry_space es;
-	struct entry_alloc cache_alloc;
+	struct entry_alloc ca;
 	struct ilist clean;
 	struct ilist dirty;
 	struct hash_table table;
