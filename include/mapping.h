@@ -36,7 +36,7 @@ bool writeback_get_dirty_cblock(mapping* mapping, unsigned *cblock);
 void writeback_complete(mapping* mapping, unsigned *cblock, bool success);
 
 /* return true, if success */
-bool set_dirty_after_write(mapping* mapping, unsigned *cblock, bool dirty);
+void set_dirty_after_write(mapping* mapping, unsigned *cblock, bool dirty);
 
 
 

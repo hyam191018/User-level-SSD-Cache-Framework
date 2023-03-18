@@ -513,7 +513,7 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
 
 	/* push into hash table*/
 	h_insert(&mapping->table, e);
-	l_add_tail(&mapping->es, &mapping->dirty, e);
+	l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
 
     *cblock = infer_cblock(mapping, e);
 end:
@@ -551,7 +551,7 @@ void promotion_complete(mapping* mapping, unsigned *cblock, bool success){
 		// !h, !q, a -> h, q, a
 		entry_set_dirty(e, false);
 		h_insert(&mapping->table, e);
-		l_add_tail(&mapping->es, &mapping->clean, e);
+		l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
 		mapping->promotion_time++;
 	}else{
 		// !h, !q, a -> !h, !q, !a
@@ -592,7 +592,7 @@ void demotion_complete(mapping* mapping, unsigned *cblock, bool success){
 		mapping->demotion_time++;
 	}else{
 		// h, !q, a -> h, q, a
-		l_add_head(&mapping->es, &mapping->clean, e);
+		l_add_head(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
 	}
 	spinlock_unlock(&mapping->mapping_lock);
 }
@@ -622,13 +622,23 @@ void writeback_complete(mapping* mapping, unsigned *cblock, bool success){
 	if(success){
 		// h, !q, a -> h, q, a
 		entry_set_dirty(e, false);
-		l_add_tail(&mapping->es, &mapping->clean, e);
+		l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
 		mapping->writeback_time++;
 	}else{
 		// h, !q, a -> h, q, a
-		l_add_head(&mapping->es, &mapping->dirty, e);
+		l_add_head(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
 	}
 	spinlock_unlock(&mapping->mapping_lock);
 }
-/*
-bool set_dirty_after_write(mapping* mapping, unsigned *cblock, bool dirty);*/
+
+void set_dirty_after_write(mapping* mapping, unsigned *cblock, bool dirty){
+	struct entry *e = get_entry(&mapping->ca, *cblock);
+
+	if(entry_get_pending(e)){
+		entry_set_dirty(e, dirty);
+	}else{
+		l_del(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+		entry_set_dirty(e, dirty);
+		l_add_tail(&mapping->es,  entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+	}
+}
