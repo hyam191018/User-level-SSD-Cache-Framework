@@ -12,14 +12,14 @@ int init_udm_cache(void){
     if(!shared_cache) {
         perror("alloc_shm");
         rc++;
-        goto err;
+        goto end;
     }
 
     shared_cache->cache_dev.bdev_name = alloc_shm(SHM_BDEV_NAME, SHM_BDEV_NAME_SIZE);
     if(!shared_cache->cache_dev.bdev_name) {
         perror("alloc_shm");
         rc++;
-        goto err;
+        goto end;
     }
 
     /* build device: from spdk */
@@ -27,12 +27,12 @@ int init_udm_cache(void){
     shared_cache->cache_dev.bdev_name[SHM_BDEV_NAME_SIZE - 1] = '\0'; // make sure string is null-terminated
     shared_cache->cache_dev.block_size = 512;
 	shared_cache->cache_dev.device_size = 10000;
-	shared_cache->cache_dev.cache_block_num = 1<<6;
+	shared_cache->cache_dev.cache_block_num = 16;
 	shared_cache->cache_dev.blocks_per_page = 8;
 	shared_cache->cache_dev.blocks_per_cache_block = 64;
 
     rc += init_mapping(&shared_cache->cache_map, shared_cache->cache_dev.block_size, shared_cache->cache_dev.cache_block_num);
-err:
+end:
     return rc;
 }
 
@@ -42,14 +42,14 @@ int link_udm_cache(void){
     if(!shared_cache) {
         perror("alloc_shm");
         rc++;
-        goto err;
+        goto end;
     }
 
     shared_cache->cache_dev.bdev_name = alloc_shm(SHM_BDEV_NAME, SHM_BDEV_NAME_SIZE);
     if(!shared_cache->cache_dev.bdev_name) {
         perror("alloc_shm");
         rc++;
-        goto err;
+        goto end;
     }
 
 
@@ -57,11 +57,11 @@ int link_udm_cache(void){
         printf("MSG: shared cache uninitialized\n");
         free_udm_cache();
         rc++;
-        goto err;
+        goto end;
     }
 
     rc += link_mapping(&shared_cache->cache_map);
-err:
+end:
     return rc;
 }
 

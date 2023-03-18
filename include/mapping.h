@@ -19,10 +19,8 @@ void info_mapping(mapping* mapping);
 /* return true, if hit */
 bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock);
 
-/* return true, if success */
-bool insert_mapping_before_io(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock);
-
-void insert_mapping_after_io(mapping *mapping, unsigned *cblock, bool success);
+/* return true, if hit or insert success */
+bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock);
 
 
 

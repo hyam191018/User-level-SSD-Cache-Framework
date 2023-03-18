@@ -26,30 +26,29 @@ static int optimizable(struct pio* pio) {
 }
 
 static int map_pio(struct cache* cache, struct pio* pio) {
-    int rc = 0;
     if (!check_pio(pio)) {
-        rc = 1;
         goto err;
     }
+    unsigned cblock;
 
-    unsigned cblock = 0;
-    bool hit = lookup_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
-
-    if (hit) {
-        rc += map_to_cache(cache, pio, cblock);
-    } else if (optimizable(pio)) {
-        bool success = insert_mapping_before_io(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
-        if(success){
-            rc += map_to_cache(cache, pio, cblock);
-            insert_mapping_after_io(&cache->cache_map, &cblock, rc == 0 ? true : false );
+    if (unlikely(optimizable(pio))) {
+        bool hit_or_success = lookup_mapping_with_insert(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
+        if(hit_or_success){
+            return map_to_cache(cache, pio, cblock);
         }else{
-            rc += map_to_origin(cache, pio);
+            return map_to_origin(cache, pio);
         }
     } else {
-        rc += map_to_origin(cache, pio);
+        bool hit = lookup_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
+        if(hit){
+            return map_to_cache(cache, pio, cblock);
+        }else{
+            return map_to_origin(cache, pio);
+        }
     }
+
 err:
-    return rc;
+    return 1;
 }
 
 /* --------------------------------------------------- */
