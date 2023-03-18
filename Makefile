@@ -7,6 +7,7 @@ APP = main
 C_SRCS := ./source/main.c ./library/udm_cache.c ./library/pio_api.c ./library/target.c ./library/mapping.c ./library/atomic.c
 
 CFLAGS += -I$(abspath $(CURDIR)/include)
+CFLAGS += -g
 
 SPDK_LIB_LIST = $(ALL_MODULES_LIST) event event_bdev
 
