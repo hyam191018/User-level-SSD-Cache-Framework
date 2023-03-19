@@ -29,7 +29,6 @@ bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigne
             return false;
         }
     }
-
     wq->rear = (wq->rear + 1) % MAX_WORKQUEUE_SIZE;
     strncpy(wq->work_queue[wq->rear].full_path_name, full_path_name, path_size);
     wq->work_queue[wq->rear].path_size = path_size;
@@ -45,10 +44,11 @@ bool pop_work(work_queue* wq, char* full_path_name, unsigned* cache_page_index) 
         spinlock_unlock(&wq->lock);
         return false;
     }
+    wq->front = (wq->front + 1) % MAX_WORKQUEUE_SIZE;
     strncpy(full_path_name, wq->work_queue[wq->front].full_path_name, wq->work_queue[wq->front].path_size);
     *cache_page_index = wq->work_queue[wq->front].cache_page_index;
-    wq->front = (wq->front + 1) % MAX_WORKQUEUE_SIZE;
     wq->size--;
+    
     spinlock_unlock(&wq->lock);
     return true;
 }
