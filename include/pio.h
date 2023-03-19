@@ -19,7 +19,7 @@ struct pio{
 	struct pio* next;
 };
 
-/* in pio_api.c */
+/* in pio.c */
 struct pio* create_pio(char* full_path_name, unsigned page_index, operate operation, void* buffer, unsigned pio_cnt);
 void append_pio(struct pio* head, void* buffer);
 void free_pio(struct pio* head);
