@@ -4,7 +4,8 @@ include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 
 APP = main
 
-C_SRCS := ./source/main.c ./library/udm_cache.c ./library/pio_api.c ./library/target.c ./library/mapping.c ./library/atomic.c
+C_SRCS := ./source/main.c ./library/udm_cache_api.c  ./library/atomic.c \
+./library/pio_api.c ./library/udm_cache_target.c ./library/udm_cache_mapping.c
 
 CFLAGS += -I$(abspath $(CURDIR)/include)
 CFLAGS += -g

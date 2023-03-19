@@ -27,7 +27,7 @@ int init_udm_cache(void){
     shared_cache->cache_dev.bdev_name[SHM_BDEV_NAME_SIZE - 1] = '\0'; // make sure string is null-terminated
     shared_cache->cache_dev.block_size = 512;
 	shared_cache->cache_dev.device_size = 10000;
-	shared_cache->cache_dev.cache_block_num = 16;
+	shared_cache->cache_dev.cache_block_num = 4;
 	shared_cache->cache_dev.blocks_per_page = 8;
 	shared_cache->cache_dev.blocks_per_cache_block = 64;
 
@@ -54,8 +54,9 @@ int link_udm_cache(void){
 
 
     if(strcmp(shared_cache->cache_dev.bdev_name, BDEV_NAME) != 0){
-        printf("MSG: shared cache uninitialized\n");
+        printf("Error: link_udm_cache - shared cache uninitialized\n");
         free_udm_cache();
+        exit_udm_cache();
         rc++;
         goto end;
     }
@@ -67,7 +68,7 @@ end:
 
 int free_udm_cache(void){
     if(!shared_cache) {
-        printf("MSG: shared cache is null\n");
+        printf("Error: free_udm_cache - shared cache uninitialized\n");
         return 1;
     }
     int rc = 0;
@@ -88,7 +89,7 @@ int exit_udm_cache(void){
 
 void info_udm_cache(void){
     if(!shared_cache) {
-        printf("MSG: shared cache is null\n");
+        printf("Error: info_udm_cache - shared cache uninitialized\n");
         return ;
     }
     printf("---> Information of cache device <---\n");

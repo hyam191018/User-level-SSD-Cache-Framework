@@ -446,6 +446,7 @@ int exit_mapping(void){
 
 /* debug */
 static void list_entrys_info(mapping* mapping){
+	printf("---> Information of entrys <---\n");
 	for(unsigned i=0;i<mapping->cblock_num;i++){
 		struct entry* e = mapping->es.begin + i;
 		printf("/ entry = %s and %u\n", e->full_path_name, e->cache_page_index);
@@ -614,6 +615,7 @@ end:
 	spinlock_unlock(&mapping->mapping_lock);
 	return res;
 }
+
 void writeback_complete(mapping* mapping, unsigned *cblock, bool success){
 	spinlock_lock(&mapping->mapping_lock);
 	struct entry *e = get_entry(&mapping->ca, *cblock);

@@ -19,6 +19,5 @@ int exit_udm_cache(void);  // unlink
 void info_udm_cache(void);
 
 int submit_pio(struct pio* pio); // return 0 if success
-void writeback(void);
 
 #endif
