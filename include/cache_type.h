@@ -10,6 +10,7 @@
 #include "atomic.h"
 #include "config.h"
 #include "stdinc.h"
+#include "work.h"
 
 struct entry {
 	unsigned hash_next;
@@ -74,6 +75,8 @@ typedef struct {
 struct cache {
 	device cache_dev;		// SSD info
 	mapping cache_map;		// mapping table
+
+	work_queue wq;			// promote request queue
 	pthread_t mg_worker;	// deal work from work queue
 	pthread_t wb_worker;	// rise writeback period
 };
