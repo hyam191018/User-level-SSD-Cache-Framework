@@ -3,7 +3,7 @@
 #include "cache_api.h"
 #include "target.h"
 #include "mapping.h"
-#include "work.h"
+#include "work_queue.h"
 
 static struct cache* shared_cache = NULL;
 
@@ -110,11 +110,20 @@ void info_udm_cache(void){
 /* --------------------------------------------------- */
 
 static void* migration(void* arg){
+    //unsigned cblock;
+    //unsigned success;
+    struct timespec ts = {0, MIGRATION_DELAY};
     while(1){
-        printf("migration\n");
-        // 檢查是否有取消請求
-        pthread_testcancel();
-        sleep(1);
+        work* work = NULL;
+        if(work){
+            printf("I get a work!\n");
+        }else{
+            // 檢查是否有取消請求
+            pthread_testcancel();
+            nanosleep(&ts, NULL);
+        }
+        
+        // 只要工作沒做完就不能結束
     }
     return NULL;
 }

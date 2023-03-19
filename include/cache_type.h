@@ -10,7 +10,7 @@
 #include "atomic.h"
 #include "config.h"
 #include "stdinc.h"
-#include "work.h"
+#include "work_queue.h"
 
 struct entry {
 	unsigned hash_next;
