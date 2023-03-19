@@ -3,6 +3,7 @@
 #include "cache_api.h"
 #include "target.h"
 #include "mapping.h"
+#include "work.h"
 
 static struct cache* shared_cache = NULL;
 
@@ -103,14 +104,101 @@ void info_udm_cache(void){
 
 /* --------------------------------------------------- */
 
+static void* migration(void* arg){
+    while(1){
+        printf("migration\n");
+        // 檢查是否有取消請求
+        pthread_testcancel();
+        sleep(1);
+    }
+    return NULL;
+}
+
+int wakeup_mg_worker(void){
+    if(!shared_cache) {
+        printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if(shared_cache->mg_worker != 0) {
+        printf("Error: mg_worker is running\n");
+        return 1;
+    }
+    
+    return pthread_create(&shared_cache->mg_worker, NULL, &migration, NULL);
+}
+
+int shutdown_mg_worker(void){
+    if(!shared_cache) {
+        printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if(shared_cache->mg_worker == 0) {
+        printf("Error: mg_worker is not running\n");
+        return 1;
+    }
+    
+    pthread_cancel(shared_cache->mg_worker);
+    int res = pthread_join(shared_cache->mg_worker, NULL);
+    shared_cache->mg_worker = 0;
+    return res;
+}
+
+static void* writeback(void* arg){
+    unsigned cblock;
+    unsigned success;
+    struct timespec ts = {0, WRITEBACK_DELAY};
+    while(1){
+        if(writeback_get_dirty_cblock(&shared_cache->cache_map, &cblock)){
+            // SSD to HDD
+            success = true;
+            writeback_complete(&shared_cache->cache_map, &cblock, success);
+        }
+        // 檢查是否有取消請求
+        pthread_testcancel();
+        nanosleep(&ts, NULL);
+    }
+    return NULL;
+}
+
+int wakeup_wb_worker(void){
+    if(!shared_cache) {
+        printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if(shared_cache->wb_worker != 0) {
+        printf("Error: wb_worker is running\n");
+        return 1;
+    }
+    
+    return pthread_create(&shared_cache->wb_worker, NULL, &writeback, NULL);
+}
+
+int shutdown_wb_worker(void){
+    if(!shared_cache) {
+        printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if(shared_cache->mg_worker == 0) {
+        printf("Error: wb_worker is not running\n");
+        return 1;
+    }
+    
+    pthread_cancel(shared_cache->wb_worker);
+    int res = pthread_join(shared_cache->wb_worker, NULL);
+    shared_cache->wb_worker = 0;
+    return res;
+}
+
+/* --------------------------------------------------- */
+
 int submit_pio(struct pio* pio){
     if(!shared_cache) {
-        printf("MSG: shared cache is null\n");
+        printf("Error: shared cache is null\n");
         return 1;
     }
 
     if(!pio){
-        printf("MSG: pio is null\n");
+        printf("Error: pio is null\n");
         return 1;
     }
 

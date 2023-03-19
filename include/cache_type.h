@@ -9,6 +9,7 @@
 
 #include "atomic.h"
 #include "config.h"
+#include "stdinc.h"
 
 struct entry {
 	unsigned hash_next;
@@ -59,7 +60,6 @@ typedef struct {
 	unsigned promotion_time;
 	unsigned demotion_time;
 	unsigned writeback_time;
-
 } mapping;
 
 typedef struct {
@@ -74,6 +74,8 @@ typedef struct {
 struct cache {
 	device cache_dev;		// SSD info
 	mapping cache_map;		// mapping table
+	pthread_t mg_worker;	// deal work from work queue
+	pthread_t wb_worker;	// rise writeback period
 };
 
 

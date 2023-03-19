@@ -1,5 +1,5 @@
 #ifndef CONFIG_H
-#define CONFIG_H
+#define WORK_H
 
 /*
  *	Author: Hyam
