@@ -8,7 +8,6 @@
  */
 
 typedef enum { READ, WRITE, DISCARD } operate;
-typedef enum { false, true } bool;
 
 /* udm-cache setting */
 #define CACHE_BLOCK_SIZE (1<<15)
