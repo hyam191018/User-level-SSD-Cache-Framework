@@ -373,7 +373,7 @@ static void h_remove(struct hash_table *ht, struct entry *e){
 /* --------------------------------------------------- */
 
 int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
-	spinlock_lock(&mapping->mapping_lock);
+	
 	int rc = 0;
     mapping->block_size = block_size;
     mapping->cblock_num = cblock_num;
@@ -397,9 +397,9 @@ int init_mapping(mapping* mapping, unsigned block_size, unsigned cblock_num){
     mapping->promotion_time = 0;
     mapping->demotion_time = 0;
     mapping->writeback_time = 0;
-
+	spinlock_init(&mapping->mapping_lock);
 end:
-	spinlock_unlock(&mapping->mapping_lock);
+	
     return rc;
 }
 
