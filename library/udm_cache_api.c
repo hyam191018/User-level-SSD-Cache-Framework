@@ -56,7 +56,6 @@ int link_udm_cache(void){
     if(strcmp(shared_cache->cache_dev.bdev_name, BDEV_NAME) != 0){
         printf("Error: link_udm_cache - shared cache uninitialized\n");
         free_udm_cache();
-        exit_udm_cache();
         rc++;
         goto end;
     }
