@@ -14,6 +14,7 @@ typedef struct {
 } spinlock;
 
 /* in atomic.c */
+void spinlock_init(spinlock* lock);
 void spinlock_lock(spinlock* lock);
 void spinlock_unlock(spinlock* lock);
 
