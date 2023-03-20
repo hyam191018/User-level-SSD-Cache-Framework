@@ -37,7 +37,7 @@ static void *producer_thread(void *arg) {
         full_path_name = generate_random_string();
 		len = strlen(full_path_name);
 		cache_page_index = rand()%MAX_INDEX;
-        if (push_work(wq, full_path_name, len, &cache_page_index)) {
+        if (push_work(wq, full_path_name, len, cache_page_index)) {
             printf("Producer: %s, %u, size is %u\n", full_path_name, cache_page_index, len);
         }
 		free(full_path_name);
