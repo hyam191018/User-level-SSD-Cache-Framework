@@ -38,7 +38,7 @@ static void *producer_thread(void *arg) {
 		len = strlen(full_path_name);
 		cache_page_index = rand()%MAX_INDEX;
         if (push_work(wq, full_path_name, len, &cache_page_index)) {
-            //printf("Producer: %s, %u, size is %u\n", full_path_name, cache_page_index, len);
+            printf("Producer: %s, %u, size is %u\n", full_path_name, cache_page_index, len);
         }
 		free(full_path_name);
     }
@@ -52,7 +52,7 @@ static void *consumer_thread(void *arg) {
 
     for(int i=0;i<test_time;i++){
         if (pop_work(wq, full_path_name, &cache_page_index)) {
-            //printf("Consumer: %s, %u\n", full_path_name, cache_page_index);
+            printf("Consumer: %s, %u\n", full_path_name, cache_page_index);
         }
     }
     return NULL;

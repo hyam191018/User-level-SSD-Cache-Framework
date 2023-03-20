@@ -16,12 +16,17 @@ static bool is_full(work_queue* wq) {
 }
 
 static bool is_contain(work_queue* wq, char* full_path_name, unsigned cache_page_index) {
-    for (int i = wq->front; i != (wq->rear) % MAX_WORKQUEUE_SIZE; i = (i + 1) % MAX_WORKQUEUE_SIZE) {
+    if (is_empty(wq)) {
+        return false;
+    }
+
+    for (int i = wq->front; i != (wq->rear + 1) % MAX_WORKQUEUE_SIZE; i = (i + 1) % MAX_WORKQUEUE_SIZE) {
         if (wq->work_queue[i].cache_page_index == cache_page_index
-            && strncmp(wq->work_queue[i].full_path_name, full_path_name, wq->work_queue[i].path_size) == 0) {
+            && strcmp(wq->work_queue[i].full_path_name, full_path_name) == 0) {
             return true;
         }
     }
+
     return false;
 }
 
@@ -33,11 +38,12 @@ bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigne
     }
     
     wq->rear = (wq->rear + 1) % MAX_WORKQUEUE_SIZE;
+    
     strncpy(wq->work_queue[wq->rear].full_path_name, full_path_name, path_size);
-    wq->work_queue[wq->rear].path_size = path_size;
+    wq->work_queue[wq->rear].full_path_name[path_size] = '\0';
+    wq->work_queue[wq->rear].path_size = path_size + 1;
     wq->work_queue[wq->rear].cache_page_index = *cache_page_index;
     wq->size++;
-    
     spinlock_unlock(&wq->lock);
     return true;
 }

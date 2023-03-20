@@ -12,7 +12,7 @@
 #include "stdinc.h"
 
 typedef struct {
-    char full_path_name[MAX_PATH_SIZE];
+    char full_path_name[MAX_PATH_SIZE + 1]; // plus '\0'
     unsigned path_size;
     unsigned cache_page_index;
 } work;
