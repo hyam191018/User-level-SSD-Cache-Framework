@@ -6,7 +6,7 @@
 #include <time.h>	/* random */
 #include <pthread.h> /* pthread */
 
-#define test_time 10000
+#define test_time 10000000
 #define MAX_PAGE 1024
 #define to_cache_page_index(page_index) (page_index >> 3)
 
@@ -22,7 +22,7 @@ static void* user_func(void *arg){
 		if(lookup_mapping(&mp, name, page_index, &cblock)){
 				
 		}else{
-			if(push_work(&wq, name, strlen(name), to_cache_page_index(page_index))){
+			if(insert_work(&wq, name, strlen(name), to_cache_page_index(page_index))){
 				printf("Producer: %s %u\n", name, to_cache_page_index(page_index));	
 			}		
 		}
@@ -32,15 +32,14 @@ static void* user_func(void *arg){
 }
 
 static void* worker_func(void *arg){
-	for(int i = 0; i<test_time*10;i++){
+	for(int i = 0; i<test_time;i++){
 		char name[MAX_PATH_SIZE];
 		unsigned cache_page_index;
 		unsigned cblock;
 		bool success;
 		if(peak_work(&wq, name, &cache_page_index)){
 			printf("Consumer: %s %u\n", name, cache_page_index);
-			remove_work(&wq);
-            if(promotion_get_free_cblock(&mp, name, cache_page_index, &cblock)){
+			if(promotion_get_free_cblock(&mp, name, cache_page_index, &cblock)){
                 success = true; // HDD to SSD        
                 promotion_complete(&mp, &cblock, success);
             }else if(demotion_get_clean_cblock(&mp, &cblock)){
@@ -50,8 +49,7 @@ static void* worker_func(void *arg){
                 success = true; // SSD to HDD
                 writeback_complete(&mp, &cblock, success);
             }
-		}else{
-
+			remove_work(&wq);
 		}
 	}
 	return NULL;
@@ -62,7 +60,7 @@ int main(void){
 	srand(time(NULL));
 	printf("init rc = %d\n", init_mapping(&mp, 512, 32));
 
-	int users = 10;
+	int users = 1;
 	int workers = 1;
 	pthread_t user[users];
 	pthread_t worker[workers];
