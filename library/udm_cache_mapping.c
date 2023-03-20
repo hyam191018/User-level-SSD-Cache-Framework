@@ -465,7 +465,7 @@ void info_mapping(mapping* mapping){
 	printf("/ demotion  time = %u\n", mapping->demotion_time);
 	printf("/ writeback time = %u\n", mapping->writeback_time);
     printf("/ hit time = %u, miss time = %u, hit ratio = %u%%\n",mapping->hit_time, mapping->miss_time, hit_ratio);
-	list_entrys_info(mapping);
+	//list_entrys_info(mapping);
 	spinlock_unlock(&mapping->mapping_lock);
 }
 /* --------------------------------------------------- */
@@ -491,6 +491,7 @@ bool do_migration_work(mapping* mapping){
 	bool success;
 	/* get a work */
 	if(peak_work(&mapping->wq, full_path_name, &cache_page_index)){
+		printf("Consumer: %s, %u\n", full_path_name, cache_page_index);
 		if(promotion_get_free_cblock(mapping, full_path_name, cache_page_index, &cblock)){
 			printf("( HDD to SSD )\n");
             success = true; // HDD to SSD        
@@ -518,7 +519,10 @@ bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index,
 		*cblock = infer_cblock(mapping, e);
 	}else{
 		mapping->miss_time++;
-		insert_work(&mapping->wq, full_path_name, strlen(full_path_name), to_cache_page_index(page_index));
+		if(insert_work(&mapping->wq, full_path_name, strlen(full_path_name), to_cache_page_index(page_index))){
+			printf("Producer: %s, %u\n", full_path_name, to_cache_page_index(page_index));
+		}
+		
 	}
     spinlock_unlock(&mapping->mapping_lock);
     return (e != NULL);
