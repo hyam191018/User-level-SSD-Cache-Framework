@@ -30,7 +30,7 @@ static bool is_contain(work_queue* wq, char* full_path_name, unsigned cache_page
     return false;
 }
 
-bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigned cache_page_index) {
+bool insert_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigned cache_page_index) {
     spinlock_lock(&wq->lock);
     if (is_full(wq) || is_contain(wq, full_path_name, cache_page_index)) {
         spinlock_unlock(&wq->lock);
@@ -48,7 +48,7 @@ bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigne
     return true;
 }
 
-bool pop_work(work_queue* wq, char* full_path_name, unsigned* cache_page_index) {
+bool peak_work(work_queue* wq, char* full_path_name, unsigned* cache_page_index) {
     spinlock_lock(&wq->lock);
     if (is_empty(wq)) {
         spinlock_unlock(&wq->lock);
@@ -57,6 +57,19 @@ bool pop_work(work_queue* wq, char* full_path_name, unsigned* cache_page_index) 
     wq->front = (wq->front + 1) % MAX_WORKQUEUE_SIZE;
     strncpy(full_path_name, wq->work_queue[wq->front].full_path_name, wq->work_queue[wq->front].path_size);
     *cache_page_index = wq->work_queue[wq->front].cache_page_index;
+    wq->front = (wq->front - 1) % MAX_WORKQUEUE_SIZE;
+    
+    spinlock_unlock(&wq->lock);
+    return true;
+}
+
+bool remove_work(work_queue* wq) {
+    spinlock_lock(&wq->lock);
+    if (is_empty(wq)) {
+        spinlock_unlock(&wq->lock);
+        return false;
+    }
+    wq->front = (wq->front + 1) % MAX_WORKQUEUE_SIZE;
     wq->size--;
     
     spinlock_unlock(&wq->lock);
