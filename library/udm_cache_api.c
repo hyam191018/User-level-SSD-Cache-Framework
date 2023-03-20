@@ -109,16 +109,13 @@ void info_udm_cache(void){
 
 /* --------------------------------------------------- */
 
-static void* migration(void* arg){
-    
+static void* migration(void* arg){    
     char full_path_name[MAX_PATH_SIZE];
     unsigned cache_page_index;
-    unsigned cblock;
-    unsigned success;
     struct timespec ts = {0, MIGRATION_DELAY};
     while(1){
         if(pop_work(&shared_cache->wq, full_path_name, &cache_page_index)){
-            printf("Consumer: %s, %u\n", full_path_name, cache_page_index);
+            printf("Consumer: %s, %u\n", full_path_name, cache_page_index); 
         }else{
             // 檢查是否有取消請求
             pthread_testcancel();
@@ -126,6 +123,7 @@ static void* migration(void* arg){
         }
         // 只要工作沒做完就不能結束
     }
+
     return NULL;
 }
 
@@ -206,22 +204,21 @@ int shutdown_wb_worker(void){
 
 /* --------------------------------------------------- */
 
+#define to_cache_page_index(page_index) (page_index >> 3)
+
 int submit_pio(struct pio* pio){
+    char *full_path_name = "testfile";
+	unsigned len = strlen(full_path_name);
+	unsigned page_index = rand()%80;
+    if (push_work(&shared_cache->wq, full_path_name, len, to_cache_page_index(page_index))) {
+        printf("Producer: %s, %u\n", full_path_name, to_cache_page_index(page_index));
+    }
+    return 1;
+
     if(!shared_cache) {
         printf("Error: shared cache is null\n");
         return 1;
     }
-    for(int i=0;i<100;i++){
-        char* full_path_name = "XXXXX";
-        unsigned len = strlen(full_path_name);
-        unsigned cache_page_index = rand()%5;
-        struct timespec ts = {0, WRITEBACK_DELAY/10};
-        printf("Producer: %s, %u\n", full_path_name, cache_page_index);
-        bool r = push_work(&shared_cache->wq, full_path_name, len, &cache_page_index);        
-        nanosleep(&ts, NULL);
-    }
-    return 1;
-
     if(!pio){
         printf("Error: pio is null\n");
         return 1;
