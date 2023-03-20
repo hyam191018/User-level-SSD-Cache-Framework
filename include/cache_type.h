@@ -51,7 +51,7 @@ typedef struct {
 	unsigned cblock_num;
 
 	struct entry_space es;
-	struct entry_alloc ca;
+	struct entry_alloc ea;
 	struct ilist clean;
 	struct ilist dirty;
 	struct hash_table table;
