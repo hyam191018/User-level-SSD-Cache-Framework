@@ -114,7 +114,7 @@ static void* migration(void* arg){
     unsigned cache_page_index;
     struct timespec ts = {0, MIGRATION_DELAY};
     while(1){
-        if(pop_work(&shared_cache->wq, full_path_name, &cache_page_index)){
+        if(false){
             printf("Consumer: %s, %u\n", full_path_name, cache_page_index); 
         }else{
             // 檢查是否有取消請求
@@ -207,14 +207,6 @@ int shutdown_wb_worker(void){
 #define to_cache_page_index(page_index) (page_index >> 3)
 
 int submit_pio(struct pio* pio){
-    char *full_path_name = "testfile";
-	unsigned len = strlen(full_path_name);
-	unsigned page_index = rand()%80;
-    if (push_work(&shared_cache->wq, full_path_name, len, to_cache_page_index(page_index))) {
-        printf("Producer: %s, %u\n", full_path_name, to_cache_page_index(page_index));
-    }
-    return 1;
-
     if(!shared_cache) {
         printf("Error: shared cache is null\n");
         return 1;
