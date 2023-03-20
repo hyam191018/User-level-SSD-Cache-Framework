@@ -22,9 +22,9 @@ bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigne
         return false;
     }
     /* 不可重複 O(n) */
-    for (int i = wq->front; i != (wq->rear + 1) % MAX_WORKQUEUE_SIZE; i = (i + 1) % MAX_WORKQUEUE_SIZE) {
-        if (strncmp(wq->work_queue[i].full_path_name, full_path_name, path_size) == 0 && 
-            wq->work_queue[i].cache_page_index == *cache_page_index) {
+    for (int i = wq->front; i != (wq->rear) % MAX_WORKQUEUE_SIZE; i = (i + 1) % MAX_WORKQUEUE_SIZE) {
+        if (wq->work_queue[i].cache_page_index == *cache_page_index && 
+            strncmp(wq->work_queue[i].full_path_name, full_path_name, path_size) == 0 ) {
             spinlock_unlock(&wq->lock);
             return false;
         }
