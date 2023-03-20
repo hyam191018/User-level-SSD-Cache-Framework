@@ -23,10 +23,12 @@ static void admin(void) {
 	info_udm_cache();
 	wakeup_mg_worker();
 	wakeup_wb_worker();
+    struct timespec ts = {0, 100000000};
 
 	printf("( udm-cache init complete )\n");
 	char input[100];
     while (1) {
+        nanosleep(&ts, NULL);
         printf("udm-cache admin > ");
 		if(fgets(input, 100, stdin) == NULL){
 			printf("Error when fgets\n");
@@ -38,6 +40,8 @@ static void admin(void) {
 
         if (strcmp(input, "stop") == 0) {
             break;
+        }else if (strcmp(input, "s") == 0) {
+			submit_pio(NULL);
         }else{
 			printf("No a command\n");
 		}
@@ -54,7 +58,9 @@ static void user(void) {
 	if(rc != 0) goto end;
 	printf("( udm-cache link complete )\n");
 	char input[100];
+    struct timespec ts = {0, 100000000};
     while (1) {
+        nanosleep(&ts, NULL);
         printf("udm-cache user > ");
 		if(fgets(input, 100, stdin) == NULL){
 			printf("Error when fgets\n");
@@ -66,7 +72,7 @@ static void user(void) {
 
         if (strcmp(input, "stop") == 0) {
             break;
-        }else if (strcmp(input, "submit") == 0) {
+        }else if (strcmp(input, "s") == 0) {
 			submit_pio(NULL);
         }else{
 			printf("No a command\n");
