@@ -30,9 +30,9 @@ static bool is_contain(work_queue* wq, char* full_path_name, unsigned cache_page
     return false;
 }
 
-bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigned *cache_page_index) {
+bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigned cache_page_index) {
     spinlock_lock(&wq->lock);
-    if (is_full(wq) || is_contain(wq, full_path_name, *cache_page_index)) {
+    if (is_full(wq) || is_contain(wq, full_path_name, cache_page_index)) {
         spinlock_unlock(&wq->lock);
         return false;
     }
@@ -42,7 +42,7 @@ bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigne
     strncpy(wq->work_queue[wq->rear].full_path_name, full_path_name, path_size);
     wq->work_queue[wq->rear].full_path_name[path_size] = '\0';
     wq->work_queue[wq->rear].path_size = path_size + 1;
-    wq->work_queue[wq->rear].cache_page_index = *cache_page_index;
+    wq->work_queue[wq->rear].cache_page_index = cache_page_index;
     wq->size++;
     spinlock_unlock(&wq->lock);
     return true;

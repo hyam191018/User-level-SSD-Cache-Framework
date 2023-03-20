@@ -26,7 +26,7 @@ typedef struct {
 } work_queue;
 
 void init_work_queue(work_queue* wq);
-bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigned *cache_page_index);
+bool push_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigned cache_page_index);
 bool pop_work(work_queue* wq, char* full_path_name, unsigned *cache_page_index);
 
 
