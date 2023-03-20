@@ -11,7 +11,7 @@
 #define NUM_CONSUMERS 10
 #define MAX_INDEX 1000
 
-#define test_time 1000000
+#define test_time 100000
 
 static char *generate_random_string(void) {
     char *full_path_name = malloc(11 * sizeof(char)); // 需要存儲的空間至少為 11 字節（10 個字元 + 1 個空字符）
@@ -38,7 +38,7 @@ static void *producer_thread(void *arg) {
 		len = strlen(full_path_name);
 		cache_page_index = rand()%MAX_INDEX;
         if (push_work(wq, full_path_name, len, &cache_page_index)) {
-            printf("Producer: %s, %u, size is %u\n", full_path_name, cache_page_index, len);
+            //printf("Producer: %s, %u, size is %u\n", full_path_name, cache_page_index, len);
         }
 		free(full_path_name);
     }
@@ -52,7 +52,7 @@ static void *consumer_thread(void *arg) {
 
     for(int i=0;i<test_time;i++){
         if (pop_work(wq, full_path_name, &cache_page_index)) {
-            printf("Consumer: %s, %u\n", full_path_name, cache_page_index);
+            //printf("Consumer: %s, %u\n", full_path_name, cache_page_index);
         }
     }
     return NULL;
