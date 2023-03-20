@@ -17,6 +17,20 @@ int exit_mapping(void);
 void info_mapping(mapping* mapping);
 
 /*
+ * Description: try to get a dirty entry to do writeback
+ * Return:  true, if done a work
+ *          false, if donothing
+ */
+bool do_writeback_work(mapping* mapping);
+
+/*
+ * Description: get a work from work_queue
+ * Return:  true, if done a work
+ *          false, if donothing
+ */
+bool do_migration_work(mapping* mapping);
+
+/*
  * Description: Search hash table
  * Return:  true, if hit
  *          false, if miss

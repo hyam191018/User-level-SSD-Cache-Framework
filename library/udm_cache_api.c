@@ -109,21 +109,15 @@ void info_udm_cache(void){
 
 /* --------------------------------------------------- */
 
-static void* migration(void* arg){    
-    char full_path_name[MAX_PATH_SIZE];
-    unsigned cache_page_index;
+static void* migration(void* arg){
     struct timespec ts = {0, MIGRATION_DELAY};
     while(1){
-        if(false){
-            printf("Consumer: %s, %u\n", full_path_name, cache_page_index); 
-        }else{
-            // 檢查是否有取消請求
+        if(!do_migration_work(&shared_cache->cache_map)){
+            // 沒事做的話，檢查是否有取消請求
             pthread_testcancel();
-            nanosleep(&ts, NULL);
+            nanosleep(&ts, NULL);   
         }
-        // 只要工作沒做完就不能結束
     }
-
     return NULL;
 }
 
@@ -157,18 +151,13 @@ int shutdown_mg_worker(void){
 }
 
 static void* writeback(void* arg){
-    unsigned cblock;
-    unsigned success;
     struct timespec ts = {0, WRITEBACK_DELAY};
     while(1){
-        if(writeback_get_dirty_cblock(&shared_cache->cache_map, &cblock)){
-            // SSD to HDD
-            success = true;
-            writeback_complete(&shared_cache->cache_map, &cblock, success);
+        if(!do_writeback_work(&shared_cache->cache_map)){
+            // 沒事做的話，檢查是否有取消請求
+            pthread_testcancel();
+            nanosleep(&ts, NULL);   
         }
-        // 檢查是否有取消請求
-        pthread_testcancel();
-        nanosleep(&ts, NULL);
     }
     return NULL;
 }

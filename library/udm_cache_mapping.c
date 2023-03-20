@@ -2,6 +2,7 @@
 #include "shm.h"
 #include "stdinc.h"
 #include "config.h"
+#include "work_queue.h"
 
 /* --------------------------------------------------- */
 
@@ -317,6 +318,7 @@ static void h_insert(struct hash_table *ht, struct entry *e){
 static struct entry *__h_lookup(struct hash_table *ht, unsigned h, char* full_path_name, unsigned cache_page_index, struct entry **prev){
 	
 	struct entry *e;
+	
 	*prev = NULL;
 	for (e = h_head(ht, h); e; e = h_next(ht, e)) {
 		if ( (cache_page_index == e->cache_page_index) && (strcmp(full_path_name, e->full_path_name) == 0)){
@@ -324,6 +326,7 @@ static struct entry *__h_lookup(struct hash_table *ht, unsigned h, char* full_pa
 		}
 		*prev = e;
 	}
+	
 	return NULL;
 }
 
@@ -465,8 +468,47 @@ void info_mapping(mapping* mapping){
 	list_entrys_info(mapping);
 	spinlock_unlock(&mapping->mapping_lock);
 }
+/* --------------------------------------------------- */
 
 #define to_cache_page_index(page_index) (page_index >> 3)
+
+bool do_writeback_work(mapping* mapping){
+	unsigned cblock;
+	unsigned success;
+    if(writeback_get_dirty_cblock(mapping, &cblock)){
+        printf("( SSD to HDD )\n");
+        success = true;
+        writeback_complete(mapping, &cblock, success);
+		return true;
+    }
+	return false;
+}
+
+bool do_migration_work(mapping* mapping){
+	char full_path_name[MAX_PATH_SIZE];
+	unsigned cache_page_index;
+	unsigned cblock;
+	bool success;
+	/* get a work */
+	if(peak_work(&mapping->wq, full_path_name, &cache_page_index)){
+		if(promotion_get_free_cblock(mapping, full_path_name, cache_page_index, &cblock)){
+			printf("( HDD to SSD )\n");
+            success = true; // HDD to SSD        
+            promotion_complete(mapping, &cblock, success);
+        }else if(demotion_get_clean_cblock(mapping, &cblock)){
+			printf("( Demotion )\n");
+            success = true; // update metadata
+            demotion_complete(mapping, &cblock, success);
+        }else if(writeback_get_dirty_cblock(mapping, &cblock)){
+			printf("( SSD to HDD )\n");
+     	    success = true; // SSD to HDD
+            writeback_complete(mapping, &cblock, success);
+        }
+		remove_work(&mapping->wq);
+		return true;
+	}
+	return false;
+}
 
 bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock){
     spinlock_lock(&mapping->mapping_lock);
@@ -476,8 +518,8 @@ bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index,
 		*cblock = infer_cblock(mapping, e);
 	}else{
 		mapping->miss_time++;
+		insert_work(&mapping->wq, full_path_name, strlen(full_path_name), to_cache_page_index(page_index));
 	}
-    
     spinlock_unlock(&mapping->mapping_lock);
     return (e != NULL);
 }
@@ -559,7 +601,6 @@ void promotion_complete(mapping* mapping, unsigned *cblock, bool success){
 
 bool demotion_get_clean_cblock(mapping* mapping, unsigned *cblock){
 	spinlock_lock(&mapping->mapping_lock);
-
 	bool res = true;
 	/* get entry from clean list */
 	if(mapping->clean.nr_elts <= (mapping->cblock_num >> 1 )){
@@ -578,7 +619,6 @@ end:
 
 void demotion_complete(mapping* mapping, unsigned *cblock, bool success){
 	spinlock_lock(&mapping->mapping_lock);
-	
 	struct entry *e = get_entry(&mapping->ca, *cblock);
 	entry_set_pending(e, false);
 
