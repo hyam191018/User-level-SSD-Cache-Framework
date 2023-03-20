@@ -119,12 +119,10 @@ static void l_del(struct entry_space *es, struct ilist *l, struct entry *e){
 static struct entry *l_pop_head(struct entry_space *es, struct ilist *l){
 
 	struct entry *e;
-
 	for (e = l_head(es, l); e; e = l_next(es, e)){
 		l_del(es, l, e);
 		return e;
 	}
-
 	return NULL;
 }
 
@@ -153,7 +151,7 @@ static void init_entry(struct entry *e){
 	e->prev = INDEXER_NULL;
 	e->next = INDEXER_NULL;
 	e->param = 0;
-	memset(e->full_path_name, 0, MAX_PATH_SIZE);
+	strcpy(e->full_path_name, "");
 	e->cache_page_index = INDEXER_NULL;
 }
 
@@ -193,12 +191,12 @@ static bool entry_get_dirty(struct entry *e){
 
 static struct entry *alloc_entry(struct entry_alloc *ea){
 	struct entry *e;
-
 	if (l_empty(&ea->free))
 		return NULL;
 
 	e = l_pop_head(ea->es, &ea->free);
 	init_entry(e);
+	
 	ea->nr_allocated++;
 
 	return e;
@@ -231,14 +229,14 @@ static unsigned infer_cblock(mapping *mapping, struct entry *e){
 /* 演算法是用chatGPT產生的: djb2 hash */
 static unsigned hash_32(char* full_path_name, unsigned cache_page_index, unsigned long long hash_bits){
 	unsigned hash_val = 5381;
-    int c;
+	unsigned len = strlen(full_path_name);
 
     // hash the integer first
     hash_val = ((hash_val << 5) + hash_val) + cache_page_index;
 
     // hash the string next
-    while ((c = *full_path_name++)) {
-        hash_val = ((hash_val << 5) + hash_val) + c; /* hash * 33 + c */
+    for(unsigned i = 0; i<len; i++){
+        hash_val = ((hash_val << 5) + hash_val) + full_path_name[i]; /* hash * 33 + c */
     }
 
 	hash_val = ( hash_val <<  (32 - hash_bits) ) >> (32 - hash_bits);
@@ -524,15 +522,13 @@ end:
 
 bool promotion_get_free_cblock(mapping* mapping, char* full_path_name, unsigned cache_page_index, unsigned *cblock){
 	spinlock_lock(&mapping->mapping_lock);
-
 	bool res = true;
 	/* check whether the free list is empty */
 	if (allocator_empty(&mapping->ca)) {
 		res = false;
 		goto end;
 	}
-	
-	/* get entry form free list */
+	/* get entry form free list */	
 	struct entry *e = alloc_entry(&mapping->ca);
     strcpy(e->full_path_name, full_path_name);
 	e->cache_page_index = cache_page_index;

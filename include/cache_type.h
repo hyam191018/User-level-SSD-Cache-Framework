@@ -17,7 +17,7 @@ struct entry {
 	unsigned prev;
 	unsigned next;
 	unsigned short param:2;	// dirty 1, pending_work 1 
-	char full_path_name[MAX_PATH_SIZE];
+	char full_path_name[MAX_PATH_SIZE + 1]; // '\0'
 	unsigned cache_page_index;
 };
 
