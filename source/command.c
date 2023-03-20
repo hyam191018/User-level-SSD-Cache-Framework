@@ -38,10 +38,12 @@ static void admin(void) {
 		// 移除字串末尾的換行符號
         input[strcspn(input, "\n")] = '\0';
 
-        if (strcmp(input, "stop") == 0) {
+        if (strcmp(input, "q") == 0) {
             break;
         }else if (strcmp(input, "s") == 0) {
 			submit_pio(NULL);
+        }else if (strcmp(input, "i") == 0) {
+			info_udm_cache();
         }else{
 			printf("No a command\n");
 		}
@@ -70,10 +72,12 @@ static void user(void) {
 		// 移除字串末尾的換行符號
         input[strcspn(input, "\n")] = '\0';
 
-        if (strcmp(input, "stop") == 0) {
+        if (strcmp(input, "q") == 0) {
             break;
         }else if (strcmp(input, "s") == 0) {
 			submit_pio(NULL);
+        }else if (strcmp(input, "i") == 0) {
+			info_udm_cache();
         }else{
 			printf("No a command\n");
 		}
@@ -102,6 +106,5 @@ int main(int argc, char *argv[]) {
         printf("Invalid argument: %s\n", argv[1]);
         return 1;
     }
-
     return 0;
 }
