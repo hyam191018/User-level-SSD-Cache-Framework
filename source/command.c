@@ -27,7 +27,7 @@ static void admin(void) {
 	printf("( udm-cache init complete )\n");
 	char input[100];
     while (1) {
-        printf("udm-cache > ");
+        printf("udm-cache admin > ");
 		if(fgets(input, 100, stdin) == NULL){
 			printf("Error when fgets\n");
 			goto end;
@@ -50,8 +50,29 @@ end:
 }
 
 static void user(void) {
-	link_udm_cache();
-	info_udm_cache();
+	int rc = link_udm_cache();
+	if(rc != 0) goto end;
+	printf("( udm-cache link complete )\n");
+	char input[100];
+    while (1) {
+        printf("udm-cache user > ");
+		if(fgets(input, 100, stdin) == NULL){
+			printf("Error when fgets\n");
+			goto end;
+		}
+
+		// 移除字串末尾的換行符號
+        input[strcspn(input, "\n")] = '\0';
+
+        if (strcmp(input, "stop") == 0) {
+            break;
+        }else if (strcmp(input, "submit") == 0) {
+			submit_pio(NULL);
+        }else{
+			printf("No a command\n");
+		}
+    }
+end:
 	free_udm_cache();
 }
 
@@ -61,14 +82,13 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-	// 設置SIGINT信號的處理程序
-    struct sigaction sig_act;
-    sig_act.sa_handler = sigint_handler;
-    sigemptyset(&sig_act.sa_mask);
-    sig_act.sa_flags = 0;
-    sigaction(SIGINT, &sig_act, NULL);
-
     if (strcmp(argv[1], "admin") == 0) {
+		// 設置SIGINT信號的處理程序
+    	struct sigaction sig_act;
+    	sig_act.sa_handler = sigint_handler;
+    	sigemptyset(&sig_act.sa_mask);
+    	sig_act.sa_flags = 0;
+    	sigaction(SIGINT, &sig_act, NULL);
         admin();
     } else if (strcmp(argv[1], "user") == 0) {
         user();
