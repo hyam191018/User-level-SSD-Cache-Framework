@@ -11,15 +11,14 @@
 static int alloc_es(struct entry_space *es, unsigned nr_entries)
 {
 	if (!nr_entries)
+	{
 		return 1;
-
+	}
 	es->begin = alloc_shm(SHM_ENTRY_SPACE, sizeof(struct entry) * nr_entries);
-
 	if (!es->begin)
 	{
 		return 1;
 	}
-
 	es->end = es->begin + nr_entries;
 	return 0;
 }
@@ -27,7 +26,9 @@ static int alloc_es(struct entry_space *es, unsigned nr_entries)
 static int unmap_es(struct entry_space *es, unsigned nr_entries)
 {
 	if (!es->begin || !nr_entries)
+	{
 		return 1;
+	}
 	return unmap_shm(es->begin, sizeof(struct entry) * nr_entries);
 }
 
@@ -51,7 +52,9 @@ static unsigned to_index(struct entry_space *es, struct entry *e)
 static struct entry *to_entry(struct entry_space *es, unsigned block)
 {
 	if (block == INDEXER_NULL)
+	{
 		return NULL;
+	}
 	return __get_entry(es, block);
 }
 
@@ -90,17 +93,18 @@ static int l_empty(struct ilist *l)
 
 static void l_add_head(struct entry_space *es, struct ilist *l, struct entry *e)
 {
-
 	struct entry *head = l_head(es, l);
 
 	e->next = l->head;
 	e->prev = INDEXER_NULL;
-
 	if (head)
+	{
 		head->prev = l->head = to_index(es, e);
+	}
 	else
+	{
 		l->head = l->tail = to_index(es, e);
-
+	}
 	l->nr_elts++;
 }
 
@@ -113,10 +117,13 @@ static void l_add_tail(struct entry_space *es, struct ilist *l, struct entry *e)
 	e->prev = l->tail;
 
 	if (tail)
+	{
 		tail->next = l->tail = to_index(es, e);
+	}
 	else
+	{
 		l->head = l->tail = to_index(es, e);
-
+	}
 	l->nr_elts++;
 }
 
@@ -127,15 +134,22 @@ static void l_del(struct entry_space *es, struct ilist *l, struct entry *e)
 	struct entry *next = l_next(es, e);
 
 	if (prev)
+	{
 		prev->next = e->next;
+	}
 	else
+	{
 		l->head = e->next;
+	}
 
 	if (next)
+	{
 		next->prev = e->prev;
+	}
 	else
+	{
 		l->tail = e->prev;
-
+	}
 	l->nr_elts--;
 }
 
@@ -234,13 +248,12 @@ static struct entry *alloc_entry(struct entry_alloc *ea)
 {
 	struct entry *e;
 	if (l_empty(&ea->free))
+	{
 		return NULL;
-
+	}
 	e = l_pop_head(ea->es, &ea->free);
 	init_entry(e);
-
 	ea->nr_allocated++;
-
 	return e;
 }
 
@@ -283,7 +296,7 @@ static unsigned hash_32(char *full_path_name, unsigned cache_page_index, unsigne
 	}
 
 	hash_val = (hash_val << (32 - hash_bits)) >> (32 - hash_bits);
-	return 0;
+	return hash_val;
 }
 
 static unsigned roundup_pow_of_two(unsigned n)
@@ -311,7 +324,9 @@ static int alloc_hash_table(struct hash_table *ht, struct entry_space *es, unsig
 	}
 
 	for (i = 0; i < nr_buckets; i++)
+	{
 		ht->buckets[i] = INDEXER_NULL;
+	}
 
 	return 0;
 }
@@ -337,7 +352,9 @@ static int unmap_hash_table(struct hash_table *ht, unsigned nr_entries)
 {
 	unsigned nr_buckets = roundup_pow_of_two(nr_entries);
 	if (!ht->buckets || !nr_entries)
+	{
 		return 1;
+	}
 	return unmap_shm(ht->buckets, nr_buckets * sizeof(*ht->buckets));
 }
 
@@ -439,25 +456,21 @@ static void h_remove(struct hash_table *ht, struct entry *e)
 
 int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num)
 {
-
-	int rc = 0;
 	mapping->block_size = block_size;
 	mapping->cblock_num = cblock_num;
 
-	rc += alloc_es(&mapping->es, mapping->cblock_num);
-	if (rc)
+	if (alloc_es(&mapping->es, mapping->cblock_num))
 	{
-		goto end;
+		return 1;
 	}
 
 	init_allocator(&mapping->ea, &mapping->es, 0, mapping->cblock_num);
 	l_init(&mapping->clean);
 	l_init(&mapping->dirty);
 
-	rc += alloc_hash_table(&mapping->table, &mapping->es, mapping->cblock_num);
-	if (rc)
+	if (alloc_hash_table(&mapping->table, &mapping->es, mapping->cblock_num))
 	{
-		goto end;
+		return 1;
 	}
 
 	mapping->hit_time = 0;
@@ -466,62 +479,41 @@ int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num)
 	mapping->demotion_time = 0;
 	mapping->writeback_time = 0;
 	spinlock_init(&mapping->mapping_lock);
-end:
-
-	return rc;
+	return 0;
 }
 
 int link_mapping(mapping *mapping)
 {
 	spinlock_lock(&mapping->mapping_lock);
-	int rc = 0;
 	link_allocator(&mapping->ea, &mapping->es);
-	rc += alloc_es(&mapping->es, mapping->cblock_num);
-
-	if (rc)
+	if (alloc_es(&mapping->es, mapping->cblock_num) || link_hash_table(&mapping->table, &mapping->es, mapping->cblock_num))
 	{
-		goto end;
+		spinlock_unlock(&mapping->mapping_lock);
+		return 1;
 	}
-	rc += link_hash_table(&mapping->table, &mapping->es, mapping->cblock_num);
-end:
 	spinlock_unlock(&mapping->mapping_lock);
-	return rc;
+	return 0;
 }
 
 int free_mapping(mapping *mapping)
 {
 	spinlock_lock(&mapping->mapping_lock);
-	int rc = 0;
-	rc += unmap_es(&mapping->es, mapping->cblock_num);
-	if (rc)
+	if (unmap_es(&mapping->es, mapping->cblock_num) || unmap_hash_table(&mapping->table, mapping->cblock_num))
 	{
-		goto end;
+		spinlock_unlock(&mapping->mapping_lock);
+		return 1;
 	}
-
-	rc += unmap_hash_table(&mapping->table, mapping->cblock_num);
-
-end:
 	spinlock_unlock(&mapping->mapping_lock);
-	return rc;
+	return 0;
 }
 
 int exit_mapping(void)
 {
-	int rc = 0;
-	rc += unlink_es();
-	rc += unlink_hash_table();
-	return rc;
-}
-
-/* debug */
-static void list_entrys_info(mapping *mapping)
-{
-	printf("---> Information of entrys <---\n");
-	for (unsigned i = 0; i < mapping->cblock_num; i++)
+	if (unlink_es() || unlink_hash_table())
 	{
-		struct entry *e = mapping->es.begin + i;
-		printf("/ entry = %s and %u\n", e->full_path_name, e->cache_page_index);
+		return 1;
 	}
+	return 0;
 }
 
 void info_mapping(mapping *mapping)
@@ -536,7 +528,6 @@ void info_mapping(mapping *mapping)
 	printf("/ demotion  time = %u\n", mapping->demotion_time);
 	printf("/ writeback time = %u\n", mapping->writeback_time);
 	printf("/ hit time = %u, miss time = %u, hit ratio = %u%%\n", mapping->hit_time, mapping->miss_time, hit_ratio);
-	// list_entrys_info(mapping);
 	spinlock_unlock(&mapping->mapping_lock);
 }
 /* --------------------------------------------------- */
@@ -585,6 +576,8 @@ bool do_migration_work(mapping *mapping)
 	return false;
 }
 
+/* --------------------------------------------------- */
+
 #define to_cache_page_index(page_index) (page_index >> 3)
 
 bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock)
@@ -610,7 +603,6 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
 	spinlock_lock(&mapping->mapping_lock);
 	bool res = true;
 	struct entry *e = h_lookup(&mapping->table, full_path_name, to_cache_page_index(page_index));
-
 	if (e)
 	{
 		mapping->hit_time++;
@@ -641,7 +633,6 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
 	/* push into hash table */
 	h_insert(&mapping->table, e);
 	l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
-
 	*cblock = infer_cblock(mapping, e);
 end:
 	spinlock_unlock(&mapping->mapping_lock);

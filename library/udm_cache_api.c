@@ -143,9 +143,9 @@ int init_udm_cache(void)
     }
     wakeup_mg_worker();
     wakeup_wb_worker();
-    shared_cache->cache_state.running = true;
     spinlock_init(&shared_cache->cache_state.lock);
-    shared_cache->cache_state.count = 1; /* admin */
+    shared_cache->cache_state.running = true;
+    shared_cache->cache_state.count = 0; /* admin */
     return 0;
 }
 
@@ -214,9 +214,6 @@ int exit_udm_cache(void)
     }
     shutdown_wb_worker();
     shutdown_mg_worker();
-    spinlock_lock(&shared_cache->cache_state.lock);
-    shared_cache->cache_state.count--;
-    spinlock_unlock(&shared_cache->cache_state.lock);
     while (true)
     {
         spinlock_lock(&shared_cache->cache_state.lock);
