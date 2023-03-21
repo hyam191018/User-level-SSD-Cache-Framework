@@ -1,6 +1,6 @@
+#include "stdinc.h"
 #include "mapping.h"
 #include "shm.h"
-#include "stdinc.h"
 #include "config.h"
 #include "work_queue.h"
 

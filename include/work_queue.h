@@ -33,6 +33,5 @@ void init_work_queue(work_queue *wq);
 bool insert_work(work_queue *wq, char *full_path_name, unsigned path_size, unsigned cache_page_index); // insert into mru
 bool peak_work(work_queue *wq, char *full_path_name, unsigned *cache_page_index);                      // get from lru
 bool remove_work(work_queue *wq);                                                                      // remove peak work
-void print_work_queue(work_queue *wq);
 
 #endif

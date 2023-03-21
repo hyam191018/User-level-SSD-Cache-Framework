@@ -81,14 +81,3 @@ bool peak_work(work_queue *wq, char *full_path_name, unsigned *cache_page_index)
     spinlock_unlock(&wq->lock);
     return true;
 }
-
-void print_work_queue(work_queue *wq)
-{
-    spinlock_lock(&wq->lock);
-    printf("front: %u, rear: %u, size: %u\n", wq->front, wq->rear, wq->size);
-    for (int i = wq->front; i != wq->rear; i = (i + 1) % MAX_WORKQUEUE_SIZE)
-    {
-        printf("%u: full_path_name: %s, cache_page_index: %u\n", i, wq->works[i].full_path_name, wq->works[i].cache_page_index);
-    }
-    spinlock_unlock(&wq->lock);
-}
