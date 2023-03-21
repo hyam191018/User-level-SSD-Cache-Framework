@@ -38,6 +38,7 @@ int init_udm_cache(void){
 	wakeup_mg_worker();
 	wakeup_wb_worker();
     shared_cache->cache_state.running = true;
+    spinlock_init(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count = 1;   /* admin */
     return 0;
 }
@@ -63,11 +64,14 @@ int link_udm_cache(void){
         unmap_shm(shared_cache, sizeof(struct cache));
         return 1;
     }
+    spinlock_lock(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count++;
+    spinlock_unlock(&shared_cache->cache_state.lock);
     return 0;
 }
 
 int free_udm_cache(void){
+    
     if(!shared_cache) {
         printf("Error: free_udm_cache - shared cache uninitialized\n");
         return 1;
@@ -77,7 +81,9 @@ int free_udm_cache(void){
         return 1;
     }
     int rc = 0;
+    spinlock_lock(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count--;
+    spinlock_unlock(&shared_cache->cache_state.lock);
     rc += free_mapping(&shared_cache->cache_map);
     rc += unmap_shm(shared_cache->cache_dev.bdev_name, SHM_BDEV_NAME_SIZE);
     rc += unmap_shm(shared_cache, sizeof(struct cache));
@@ -91,9 +97,17 @@ int exit_udm_cache(void){
     }
 	shutdown_wb_worker();
 	shutdown_mg_worker();
+    spinlock_lock(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count--;
-    while(shared_cache->cache_state.count > 0){
+    spinlock_unlock(&shared_cache->cache_state.lock);
+    while(true){
+        spinlock_lock(&shared_cache->cache_state.lock);
+        if(!shared_cache->cache_state.count){
+            spinlock_unlock(&shared_cache->cache_state.lock);
+            break;    
+        }
         printf("Waiting for %d user(s) ... \n", shared_cache->cache_state.count);
+        spinlock_unlock(&shared_cache->cache_state.lock);
         sleep(1);
     }
     int rc = 0;
@@ -104,6 +118,14 @@ int exit_udm_cache(void){
     rc += unlink_shm(SHM_BDEV_NAME);
     rc += unlink_shm(SHM_CACHE_NAME);
     return rc;
+}
+
+void force_exit_udm_cache(void){
+	shutdown_wb_worker();
+	shutdown_mg_worker();
+    exit_mapping();
+    unlink_shm(SHM_BDEV_NAME);
+    unlink_shm(SHM_CACHE_NAME);
 }
 
 void info_udm_cache(void){

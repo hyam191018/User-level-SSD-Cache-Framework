@@ -20,6 +20,7 @@ int init_udm_cache(void);  // open and init
 int link_udm_cache(void);  // opan and map
 int free_udm_cache(void);  // unmap
 int exit_udm_cache(void);  // unlink
+void force_exit_udm_cache(void);  // for debug
 void info_udm_cache(void);
 
 int wakeup_mg_worker(void);

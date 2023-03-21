@@ -77,6 +77,7 @@ typedef struct {
 typedef struct {
 	bool running;
 	unsigned count;			// users and admin number
+	spinlock lock;			// protect count
 } state;
 
 struct cache {

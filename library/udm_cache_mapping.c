@@ -489,14 +489,12 @@ bool do_migration_work(mapping* mapping){
 	/* get a work */
 	if(peak_work(&mapping->wq, full_path_name, &cache_page_index)){
 		if(promotion_get_free_cblock(mapping, full_path_name, cache_page_index, &cblock)){
-			printf("( HDD to SSD )\n");
             success = true; // HDD to SSD        
             promotion_complete(mapping, &cblock, success);
         }else if(demotion_get_clean_cblock(mapping, &cblock)){
             success = true; // update metadata
             demotion_complete(mapping, &cblock, success);
         }else if(writeback_get_dirty_cblock(mapping, &cblock)){
-			printf("( SSD to HDD )\n");
      	    success = true; // SSD to HDD
             writeback_complete(mapping, &cblock, success);
         }
