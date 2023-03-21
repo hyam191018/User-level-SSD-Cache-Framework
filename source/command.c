@@ -10,79 +10,72 @@
  * Description: 控制程式，可分成admin(管理者)與user(使用者)
  */
 
-static void sigint_handler(int sig_num) {
+static void sigint_handler_for_admin(int sig_num) {
 	shutdown_mg_worker();
-	free_udm_cache();
+	shutdown_wb_worker();
 	exit_udm_cache();
     exit(0);
 }
 
+static void sigint_handler_for_user(int sig_num) {
+	free_udm_cache();
+    exit(0);
+}
+
 static void admin(void) {
-	exit_udm_cache();
-	init_udm_cache();
-	info_udm_cache();
+	if(init_udm_cache()){
+		return;
+	}
+
 	wakeup_mg_worker();
 	wakeup_wb_worker();
-    struct timespec ts = {0, 100000000};
+	info_udm_cache();
+	printf(">> admin is running <<\n");
 
-	printf("( udm-cache init complete )\n");
-	char input[100];
+	char command[100];
     while (1) {
-        nanosleep(&ts, NULL);
         printf("udm-cache admin > ");
-		if(fgets(input, 100, stdin) == NULL){
-			printf("Error when fgets\n");
-			goto end;
+        if(!fgets(command, sizeof(command), stdin)){
+			break;
 		}
-
-		// 移除字串末尾的換行符號
-        input[strcspn(input, "\n")] = '\0';
-
-        if (strcmp(input, "q") == 0) {
-            break;
-        }else if (strcmp(input, "s") == 0) {
+        // 這裡可以對使用者輸入的指令進行處理或執行
+		command[strcspn(command, "\n")] = 0; // 刪除字串中的換行符號
+		if(strcmp(command, "q") == 0){
+			break;
+		}else if(strcmp(command, "s") == 0){
 			submit_pio(NULL);
-        }else if (strcmp(input, "i") == 0) {
-			info_udm_cache();
-        }else{
-			printf("No a command\n");
+		}else{
+			printf("Not a command\n");
 		}
     }
-end:
 	shutdown_wb_worker();
 	shutdown_mg_worker();
-	free_udm_cache();
 	exit_udm_cache();
 }
 
 static void user(void) {
-	int rc = link_udm_cache();
-	if(rc != 0) goto end;
-	printf("( udm-cache link complete )\n");
-	char input[100];
-    struct timespec ts = {0, 100000000};
+	if(link_udm_cache()){
+		free_udm_cache();
+		return;
+	}
+	info_udm_cache();
+
+	char command[100];
     while (1) {
-        nanosleep(&ts, NULL);
         printf("udm-cache user > ");
-		if(fgets(input, 100, stdin) == NULL){
-			printf("Error when fgets\n");
-			goto end;
+        if(!fgets(command, sizeof(command), stdin)){
+			break;
 		}
-
-		// 移除字串末尾的換行符號
-        input[strcspn(input, "\n")] = '\0';
-
-        if (strcmp(input, "q") == 0) {
-            break;
-        }else if (strcmp(input, "s") == 0) {
+        // 這裡可以對使用者輸入的指令進行處理或執行
+		command[strcspn(command, "\n")] = 0; // 刪除字串中的換行符號
+		if(strcmp(command, "q") == 0){
+			break;
+		}else if(strcmp(command, "s") == 0){
 			submit_pio(NULL);
-        }else if (strcmp(input, "i") == 0) {
-			info_udm_cache();
-        }else{
-			printf("No a command\n");
+		}else{
+			printf("Not a command\n");
 		}
     }
-end:
 	free_udm_cache();
 }
 
@@ -91,16 +84,20 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s [admin/user]\n", argv[0]);
         return 1;
     }
+	// 設置SIGINT信號的處理程序
+    struct sigaction sig_act;
 
     if (strcmp(argv[1], "admin") == 0) {
-		// 設置SIGINT信號的處理程序
-    	struct sigaction sig_act;
-    	sig_act.sa_handler = sigint_handler;
+		sig_act.sa_handler = sigint_handler_for_admin;
     	sigemptyset(&sig_act.sa_mask);
     	sig_act.sa_flags = 0;
     	sigaction(SIGINT, &sig_act, NULL);
         admin();
     } else if (strcmp(argv[1], "user") == 0) {
+		sig_act.sa_handler = sigint_handler_for_user;
+    	sigemptyset(&sig_act.sa_mask);
+    	sig_act.sa_flags = 0;
+    	sigaction(SIGINT, &sig_act, NULL);
         user();
     } else {
         printf("Invalid argument: %s\n", argv[1]);
