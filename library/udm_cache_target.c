@@ -39,7 +39,6 @@ static int map_pio(struct cache *cache, struct pio *pio)
 
     unsigned cblock;
     bool hit_or_inserted = false;
-
     if (unlikely(optimizable(pio)))
     {
         hit_or_inserted = lookup_mapping_with_insert(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
@@ -48,12 +47,10 @@ static int map_pio(struct cache *cache, struct pio *pio)
     {
         hit_or_inserted = lookup_mapping(&cache->cache_map, pio->full_path_name, pio->page_index, &cblock);
     }
-
     if (hit_or_inserted)
     {
         return map_to_cache(cache, pio, cblock);
     }
-
     return map_to_origin(cache, pio);
 }
 
@@ -65,6 +62,5 @@ int _submit_pio(struct cache *cache, struct pio *pio)
     {
         return 1;
     }
-
     return map_pio(cache, pio);
 }
