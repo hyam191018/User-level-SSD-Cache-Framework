@@ -12,8 +12,10 @@
 #include "pio.h"
 
 /* in udm_cache_api.c */
-/* return 0 if success, or return err counts */
+/* return 0 if success */
 
+/* admin: init > running > exit */
+/* users" link > running > free */
 int init_udm_cache(void);  // open and init
 int link_udm_cache(void);  // opan and map
 int free_udm_cache(void);  // unmap

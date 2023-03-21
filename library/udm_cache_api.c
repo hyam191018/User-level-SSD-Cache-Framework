@@ -8,19 +8,17 @@
 static struct cache* shared_cache = NULL;
 
 int init_udm_cache(void){
-    int rc = 0;
     shared_cache = alloc_shm(SHM_CACHE_NAME, sizeof(struct cache));
     if(!shared_cache) {
-        perror("alloc_shm");
-        rc++;
-        goto end;
+        return 1;
     }
-
     shared_cache->cache_dev.bdev_name = alloc_shm(SHM_BDEV_NAME, SHM_BDEV_NAME_SIZE);
     if(!shared_cache->cache_dev.bdev_name) {
-        perror("alloc_shm");
-        rc++;
-        goto end;
+        return 1;
+    }
+    if(shared_cache->cache_state.running){
+        printf("Error: init_udm_cache - admin is running\n");
+        return 1;
     }
 
     /* build device: from spdk */
@@ -28,47 +26,45 @@ int init_udm_cache(void){
     shared_cache->cache_dev.bdev_name[SHM_BDEV_NAME_SIZE - 1] = '\0'; // make sure string is null-terminated
     shared_cache->cache_dev.block_size = 512;
 	shared_cache->cache_dev.device_size = 10000;
-    if(shared_cache->cache_dev.block_size * shared_cache->cache_dev.device_size < CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE) {
-        printf("Error: Cache device size is not enough\n");
-        rc++;
-        goto end;
-    }
 	shared_cache->cache_dev.cache_block_num = CACHE_BLOCK_NUMBER;
 	shared_cache->cache_dev.blocks_per_page = 8;
 	shared_cache->cache_dev.blocks_per_cache_block = 64;
+    if(shared_cache->cache_dev.block_size * shared_cache->cache_dev.device_size < CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE) {
+        printf("Error: Cache device size is not enough for setting cblock number\n");
+        return 1;
+    }
+    if(init_mapping(&shared_cache->cache_map, shared_cache->cache_dev.block_size, shared_cache->cache_dev.cache_block_num)){
+        return 1;
+    }
 
-    rc += init_mapping(&shared_cache->cache_map, shared_cache->cache_dev.block_size, shared_cache->cache_dev.cache_block_num);
-end:
-    return rc;
+    shared_cache->cache_state.running = true;
+    shared_cache->cache_state.count = 1;   /* admin */
+    return 0;
 }
 
 int link_udm_cache(void){
-    int rc = 0;
     shared_cache = alloc_shm(SHM_CACHE_NAME, sizeof(struct cache));
     if(!shared_cache) {
-        perror("alloc_shm");
-        rc++;
-        goto end;
+        return 1;
     }
-
-    shared_cache->cache_dev.bdev_name = alloc_shm(SHM_BDEV_NAME, SHM_BDEV_NAME_SIZE);
-    if(!shared_cache->cache_dev.bdev_name) {
-        perror("alloc_shm");
-        rc++;
-        goto end;
-    }
-
-
-    if(strcmp(shared_cache->cache_dev.bdev_name, BDEV_NAME) != 0){
+    if(!shared_cache->cache_state.running){
         printf("Error: link_udm_cache - shared cache uninitialized\n");
-        free_udm_cache();
-        rc++;
-        goto end;
+        return 1;
     }
-
-    rc += link_mapping(&shared_cache->cache_map);
-end:
-    return rc;
+    shared_cache->cache_dev.bdev_name = alloc_shm(SHM_BDEV_NAME, SHM_BDEV_NAME_SIZE);
+    if(!shared_cache->cache_dev.bdev_name) { 
+        return 1;
+    }
+    if(link_mapping(&shared_cache->cache_map)){
+        return 1;
+    }
+    if(!shared_cache->cache_state.running){
+        printf("Error: link_udm_cache - shared cache uninitialized\n");
+        unmap_shm(shared_cache, sizeof(struct cache));
+        return 1;
+    }
+    shared_cache->cache_state.count++;
+    return 0;
 }
 
 int free_udm_cache(void){
@@ -76,16 +72,33 @@ int free_udm_cache(void){
         printf("Error: free_udm_cache - shared cache uninitialized\n");
         return 1;
     }
+    if(!shared_cache->cache_state.running){
+        printf("Error: free_udm_cache - shared cache uninitialized\n");
+        return 1;
+    }
     int rc = 0;
+    shared_cache->cache_state.count--;
     rc += free_mapping(&shared_cache->cache_map);
     rc += unmap_shm(shared_cache->cache_dev.bdev_name, SHM_BDEV_NAME_SIZE);
     rc += unmap_shm(shared_cache, sizeof(struct cache));
-    shared_cache = NULL;
     return rc;
 }
 
 int exit_udm_cache(void){
+    if(!shared_cache){
+        printf("Error: exit_udm_cache - shared cache uninitialized\n");
+        return 1;
+    }
+
+    shared_cache->cache_state.count--;
+    while(shared_cache->cache_state.count > 0){
+        printf("Waiting for %d user(s) ... \n", shared_cache->cache_state.count);
+        sleep(1);
+    }
     int rc = 0;
+    rc += free_mapping(&shared_cache->cache_map);
+    rc += unmap_shm(shared_cache->cache_dev.bdev_name, SHM_BDEV_NAME_SIZE);
+    rc += unmap_shm(shared_cache, sizeof(struct cache));
     rc += exit_mapping();
     rc += unlink_shm(SHM_BDEV_NAME);
     rc += unlink_shm(SHM_CACHE_NAME);
@@ -95,7 +108,11 @@ int exit_udm_cache(void){
 void info_udm_cache(void){
     if(!shared_cache) {
         printf("Error: info_udm_cache - shared cache uninitialized\n");
-        return ;
+        return;
+    }
+    if(!shared_cache->cache_state.running){
+        printf("Error: info_udm_cache - shared cache uninitialized\n");
+        return;
     }
     printf("---> Information of cache device <---\n");
     printf("/ bdev name = %s\n", shared_cache->cache_dev.bdev_name);
@@ -130,7 +147,6 @@ int wakeup_mg_worker(void){
         printf("Error: mg_worker is running\n");
         return 1;
     }
-    
     return pthread_create(&shared_cache->mg_worker, NULL, &migration, NULL);
 }
 
@@ -143,11 +159,10 @@ int shutdown_mg_worker(void){
         printf("Error: mg_worker is not running\n");
         return 1;
     }
-    
     pthread_cancel(shared_cache->mg_worker);
-    int res = pthread_join(shared_cache->mg_worker, NULL);
+    int rc = pthread_join(shared_cache->mg_worker, NULL);
     shared_cache->mg_worker = 0;
-    return res;
+    return rc;
 }
 
 static void* writeback(void* arg){
@@ -180,7 +195,7 @@ int shutdown_wb_worker(void){
         printf("Error: shared cache is null\n");
         return 1;
     }
-    if(shared_cache->mg_worker == 0) {
+    if(shared_cache->wb_worker == 0) {
         printf("Error: wb_worker is not running\n");
         return 1;
     }
@@ -198,6 +213,10 @@ int shutdown_wb_worker(void){
 int submit_pio(struct pio* pio){
     if(!shared_cache) {
         printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if(!shared_cache->cache_state.running){
+        printf("Error: admin is not running\n");
         return 1;
     }
     if(!pio){

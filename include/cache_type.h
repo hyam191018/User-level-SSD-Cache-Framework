@@ -74,7 +74,13 @@ typedef struct {
 	unsigned blocks_per_cache_block;	// 32KB / 512 = 64
 } device;
 
+typedef struct {
+	bool running;
+	unsigned count;			// users and admin number
+} state;
+
 struct cache {
+	state cache_state;		// for share cache
 	device cache_dev;		// SSD info
 	mapping cache_map;		// mapping table
 
