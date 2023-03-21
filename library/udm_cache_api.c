@@ -36,7 +36,8 @@ int init_udm_cache(void){
     if(init_mapping(&shared_cache->cache_map, shared_cache->cache_dev.block_size, shared_cache->cache_dev.cache_block_num)){
         return 1;
     }
-
+	wakeup_mg_worker();
+	wakeup_wb_worker();
     shared_cache->cache_state.running = true;
     shared_cache->cache_state.count = 1;   /* admin */
     return 0;
@@ -89,7 +90,8 @@ int exit_udm_cache(void){
         printf("Error: exit_udm_cache - shared cache uninitialized\n");
         return 1;
     }
-
+	shutdown_wb_worker();
+	shutdown_mg_worker();
     shared_cache->cache_state.count--;
     while(shared_cache->cache_state.count > 0){
         printf("Waiting for %d user(s) ... \n", shared_cache->cache_state.count);

@@ -26,9 +26,6 @@ static void admin(void) {
 	if(init_udm_cache()){
 		return;
 	}
-
-	wakeup_mg_worker();
-	wakeup_wb_worker();
 	info_udm_cache();
 	printf(">> admin is running <<\n");
 
@@ -48,8 +45,6 @@ static void admin(void) {
 			printf("Not a command\n");
 		}
     }
-	shutdown_wb_worker();
-	shutdown_mg_worker();
 	exit_udm_cache();
 }
 
