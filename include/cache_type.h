@@ -38,7 +38,6 @@ struct entry_alloc
 {
 	struct entry_space *es;
 	unsigned begin;
-
 	unsigned nr_allocated;
 	struct ilist free;
 };

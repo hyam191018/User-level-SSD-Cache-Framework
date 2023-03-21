@@ -5,7 +5,9 @@ struct pio *create_pio(char *full_path_name, unsigned page_index, operate operat
 {
     struct pio *new_pio = (struct pio *)malloc(sizeof(struct pio));
     if (!new_pio)
+    {
         return NULL;
+    }
     new_pio->full_path_name = full_path_name;
     new_pio->page_index = page_index;
     new_pio->operation = operation;

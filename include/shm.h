@@ -22,14 +22,12 @@ static void *alloc_shm(char *shm_name, size_t shm_size)
         perror("ftruncate");
         return NULL;
     }
-
     void *shm_ptr = mmap(NULL, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     if (shm_ptr == MAP_FAILED)
     {
         perror("mmap");
         return NULL;
     }
-
     return shm_ptr;
 }
 
@@ -40,7 +38,6 @@ static int unmap_shm(void *shm_ptr, size_t shm_size)
         perror("munmap");
         return -1;
     }
-
     return 0;
 }
 
@@ -51,7 +48,6 @@ static int unlink_shm(char *shm_name)
         perror("unlink");
         return -1;
     }
-
     return 0;
 }
 
