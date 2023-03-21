@@ -31,7 +31,6 @@ bool insert_work(work_queue* wq, char* full_path_name, unsigned path_size, unsig
         spinlock_unlock(&wq->lock);
         return false;
     }
-    printf("Insert a work: %s %u\n", full_path_name, cache_page_index);
     strncpy(wq->works[wq->rear].full_path_name, full_path_name, path_size);
     wq->works[wq->rear].full_path_name[path_size] = '\0';
     wq->works[wq->rear].path_size = path_size;
@@ -63,7 +62,6 @@ bool peak_work(work_queue* wq, char* full_path_name, unsigned* cache_page_index)
     strncpy(full_path_name, wq->works[wq->front].full_path_name, wq->works[wq->front].path_size);
     full_path_name[wq->works[wq->front].path_size] = '\0';
     *cache_page_index = wq->works[wq->front].cache_page_index;
-    printf("Peak a work: %s %u\n", full_path_name, *cache_page_index);
     spinlock_unlock(&wq->lock);
     return true;
 }

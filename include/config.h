@@ -11,7 +11,7 @@ typedef enum { READ, WRITE, DISCARD } operate;
 
 /* udm-cache setting */
 #define CACHE_BLOCK_SIZE (1<<15)
-#define CACHE_BLOCK_NUMBER (1<<3)
+#define CACHE_BLOCK_NUMBER (1<<5)
 #define PAGE_SIZE (1<<12)
 #define MAX_PATH_SIZE (1<<5)
 #define WRITEBACK_DELAY 500000000 // ns (writeback period default is 500ms)
