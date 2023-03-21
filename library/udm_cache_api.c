@@ -3,7 +3,6 @@
 #include "cache_api.h"
 #include "target.h"
 #include "mapping.h"
-#include "work_queue.h"
 
 static struct cache* shared_cache = NULL;
 
