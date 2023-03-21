@@ -2,16 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(void) {
-    // 分別申請三塊4096字節的內存空間
-    void* buffer = malloc(4096);
-    void* buffer2 = malloc(4096);
-    void* buffer3 = malloc(4096);
+int main(void)
+{
+    void *buffer = malloc(4096);
+    void *buffer2 = malloc(4096);
+    void *buffer3 = malloc(4096);
 
-    // 創建PIO對象
-    struct pio* pio = create_pio("test", 0, READ, buffer, 3);
+    // 創建PIO
+    struct pio *pio = create_pio("test", 0, READ, buffer, 3);
 
-    // 追加兩塊內存空間到PIO中
     append_pio(pio, buffer2);
     append_pio(pio, buffer3);
 
