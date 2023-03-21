@@ -9,13 +9,14 @@
 
 #include <stdatomic.h>
 
-typedef struct {
+typedef struct
+{
     atomic_int locked;
 } spinlock;
 
 /* in atomic.c */
-void spinlock_init(spinlock* lock);
-void spinlock_lock(spinlock* lock);
-void spinlock_unlock(spinlock* lock);
+void spinlock_init(spinlock *lock);
+void spinlock_lock(spinlock *lock);
+void spinlock_unlock(spinlock *lock);
 
 #endif

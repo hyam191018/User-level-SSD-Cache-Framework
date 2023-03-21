@@ -12,14 +12,16 @@
 #include "atomic.h"
 #include "stdinc.h"
 
-typedef struct {
+typedef struct
+{
     /* 要promotion資訊 */
     char full_path_name[MAX_PATH_SIZE + 1]; // plus '\0'
     unsigned path_size;
     unsigned cache_page_index;
 } work;
 
-typedef struct {
+typedef struct
+{
     work works[MAX_WORKQUEUE_SIZE];
     int front;
     int rear;
@@ -27,10 +29,10 @@ typedef struct {
     spinlock lock;
 } work_queue;
 
-void init_work_queue(work_queue* wq);
-bool insert_work(work_queue* wq, char* full_path_name, unsigned path_size, unsigned cache_page_index);  // insert into mru
-bool peak_work(work_queue* wq, char* full_path_name, unsigned *cache_page_index);   // get from lru
-bool remove_work(work_queue* wq);   // remove peak work
-void print_work_queue(work_queue* wq);
+void init_work_queue(work_queue *wq);
+bool insert_work(work_queue *wq, char *full_path_name, unsigned path_size, unsigned cache_page_index); // insert into mru
+bool peak_work(work_queue *wq, char *full_path_name, unsigned *cache_page_index);                      // get from lru
+bool remove_work(work_queue *wq);                                                                      // remove peak work
+void print_work_queue(work_queue *wq);
 
 #endif

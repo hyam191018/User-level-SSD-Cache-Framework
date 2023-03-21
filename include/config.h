@@ -7,13 +7,18 @@
  *	Description: 對整個udm-cache架構的變數定義集合
  */
 
-typedef enum { READ, WRITE, DISCARD } operate;
+typedef enum
+{
+    READ,
+    WRITE,
+    DISCARD
+} operate;
 
 /* udm-cache setting */
-#define CACHE_BLOCK_SIZE (1<<15)
-#define CACHE_BLOCK_NUMBER (1<<5)
-#define PAGE_SIZE (1<<12)
-#define MAX_PATH_SIZE (1<<5)
+#define CACHE_BLOCK_SIZE (1 << 15)
+#define CACHE_BLOCK_NUMBER (1 << 5)
+#define PAGE_SIZE (1 << 12)
+#define MAX_PATH_SIZE (1 << 5)
 #define WRITEBACK_DELAY 500000000 // ns (writeback period default is 500ms)
 #define MIGRATION_DELAY 100000000 // ns (If work queue is empty, mg_work sleep 500ms)
 #define MAX_WORKQUEUE_SIZE (CACHE_BLOCK_NUMBER >> 1)
@@ -33,6 +38,6 @@ typedef enum { READ, WRITE, DISCARD } operate;
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 /* instead of a/b*/
-#define safe_div(a, b) ((b != 0 ) ? (a / b) + !!(a % b) : 0)
+#define safe_div(a, b) ((b != 0) ? (a / b) + !!(a % b) : 0)
 
 #endif

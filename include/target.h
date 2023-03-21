@@ -12,6 +12,6 @@
 #include "pio.h"
 
 /* in target.c */
-int _submit_pio(struct cache* cache, struct pio* pio);
+int _submit_pio(struct cache *cache, struct pio *pio);
 
 #endif
