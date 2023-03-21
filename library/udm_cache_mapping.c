@@ -209,7 +209,6 @@ static struct entry *alloc_entry(struct entry_alloc *ea){
 
 static void free_entry(struct entry_alloc *ea, struct entry *e){
 	ea->nr_allocated--;
-	printf("I freed entry %u\n", to_index(ea->es, e));
 	l_add_tail(ea->es, &ea->free, e);
 }
 
@@ -220,10 +219,6 @@ static int allocator_empty(struct entry_alloc *ea){
 
 static unsigned get_index(struct entry_alloc *ea, struct entry *e){
 	return to_index(ea->es, e) - ea->begin;
-}
-
-static struct entry *get_entry(struct entry_alloc *ea, unsigned index){
-	return __get_entry(ea->es, ea->begin + index);
 }
 
 static unsigned infer_cblock(mapping *mapping, struct entry *e){
@@ -311,7 +306,6 @@ static struct entry *h_next(struct hash_table *ht, struct entry *e){
 static void __h_insert(struct hash_table *ht, unsigned bucket, struct entry *e){
 	e->hash_next = ht->buckets[bucket];
 	ht->buckets[bucket] = to_index(ht->es, e);
-	printf("insert: %d -> %d \n", to_index(ht->es, e), e->hash_next);
 }
 
 static void h_insert(struct hash_table *ht, struct entry *e){
@@ -322,12 +316,8 @@ static void h_insert(struct hash_table *ht, struct entry *e){
 static struct entry *__h_lookup(struct hash_table *ht, unsigned h, char* full_path_name, unsigned cache_page_index, struct entry **prev){
 	
 	struct entry *e;
-	
 	*prev = NULL;
-	int c = 0;
 	for (e = h_head(ht, h); e; e = h_next(ht, e)) {
-		c++;
-		if(c>100) goto err;
 		if ( (cache_page_index == e->cache_page_index) && (strcmp(full_path_name, e->full_path_name) == 0)){
 			return e;
 		}
@@ -336,29 +326,14 @@ static struct entry *__h_lookup(struct hash_table *ht, unsigned h, char* full_pa
 	
 	
 	return NULL;
-err:
-	c = 0;
-	for (e = h_head(ht, h); e; e = h_next(ht, e)) {
-		c++;
-		if(c>20) break;
-		printf("%u->", to_index(ht->es, e));
-	}printf("\n");
-	sleep(10);
-	return NULL;
 }
 
 static void __h_unlink(struct hash_table *ht, unsigned h, struct entry *e, struct entry *prev){
 	if (prev){
 		prev->hash_next = e->hash_next;
-		printf("remove: %d -> %d -> %d \n", to_index(ht->es, prev), to_index(ht->es, e), e->hash_next);
-		printf("remove: %d -------> %d \n", to_index(ht->es, prev), e->hash_next);
 	}else{
 		ht->buckets[h] = e->hash_next;
-		printf("remove: %d -> %d \n", to_index(ht->es, e), e->hash_next);
-		printf("remove: head -------> %d \n", e->hash_next);
 	}
-	
-	
 }
 
 static struct entry *h_lookup(struct hash_table *ht, char* full_path_name, unsigned cache_page_index){
@@ -384,14 +359,28 @@ static void h_remove(struct hash_table *ht, struct entry *e){
 	unsigned h = hash_32(e->full_path_name, e->cache_page_index, ht->hash_bits);
 	struct entry *prev;
 	
+	unsigned old = to_index(ht->es, e);
+	unsigned new;
+	
 	/*
 	 * The down side of using a singly linked list is we have to
 	 * iterate the bucket to remove an item.
 	 */
 	e = __h_lookup(ht, h, e->full_path_name, e->cache_page_index, &prev);
+	new = to_index(ht->es, e);
 
-	if (e)
+	if(old != new){
+		for(unsigned i=0;i<8;i++){
+			struct entry* e = ht->es->begin + i;
+			printf("/ entry = %s and %u\n", e->full_path_name, e->cache_page_index);
+		}
+		sleep(10);
+	}
+	
+	if (e){
 		__h_unlink(ht, h, e, prev);
+	}
+	
 }
 
 
@@ -510,11 +499,14 @@ bool do_migration_work(mapping* mapping){
 	bool success;
 	/* get a work */
 	if(peak_work(&mapping->wq, full_path_name, &cache_page_index)){
+		printf("pop work %s %d\n", full_path_name, cache_page_index);
 		if(promotion_get_free_cblock(mapping, full_path_name, cache_page_index, &cblock)){
+			printf("insert %s %d\n", full_path_name, cache_page_index);
 			printf("( HDD to SSD )\n");
             success = true; // HDD to SSD        
             promotion_complete(mapping, &cblock, success);
         }else if(demotion_get_clean_cblock(mapping, &cblock)){
+			printf("remove %s %d\n", full_path_name, cache_page_index);
 			printf("( Demotion )\n");
             success = true; // update metadata
             demotion_complete(mapping, &cblock, success);
@@ -539,7 +531,9 @@ bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index,
 		*cblock = infer_cblock(mapping, e);
 	}else{
 		mapping->miss_time++;
-		insert_work(&mapping->wq, full_path_name, strlen(full_path_name), to_cache_page_index(page_index));
+		if(insert_work(&mapping->wq, full_path_name, strlen(full_path_name), to_cache_page_index(page_index))){
+			printf("push work: %s %u\n", full_path_name, to_cache_page_index(page_index));
+		}
 	}
     spinlock_unlock(&mapping->mapping_lock);
     return (e != NULL);
@@ -604,13 +598,14 @@ end:
 
 void promotion_complete(mapping* mapping, unsigned *cblock, bool success){
 	spinlock_lock(&mapping->mapping_lock);
-	struct entry *e = get_entry(&mapping->ea, *cblock);
+	struct entry *e = to_entry(&mapping->es, *cblock);
 	entry_set_pending(e, false);
 
 	if(success){
 		// !h, !q, a -> h, q, a
 		entry_set_dirty(e, false);
 		h_insert(&mapping->table, e);
+		printf("h_insert ! %s %u\n", e->full_path_name, e->cache_page_index);
 		l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
 		mapping->promotion_time++;
 	}else{
@@ -640,9 +635,9 @@ end:
 
 void demotion_complete(mapping* mapping, unsigned *cblock, bool success){
 	spinlock_lock(&mapping->mapping_lock);
-	struct entry *e = get_entry(&mapping->ea, *cblock);
+	struct entry *e = to_entry(&mapping->es, *cblock);
 	entry_set_pending(e, false);
-
+	
 	if(success){
 		// h, !q, a -> !h, !q, !a
 		h_remove(&mapping->table, e);
@@ -657,7 +652,6 @@ void demotion_complete(mapping* mapping, unsigned *cblock, bool success){
 
 bool writeback_get_dirty_cblock(mapping* mapping, unsigned *cblock){
 	spinlock_lock(&mapping->mapping_lock);
-
 	bool res = true;
 	/* get entry from dirty list */
 	if(!mapping->dirty.nr_elts){
@@ -675,7 +669,7 @@ end:
 
 void writeback_complete(mapping* mapping, unsigned *cblock, bool success){
 	spinlock_lock(&mapping->mapping_lock);
-	struct entry *e = get_entry(&mapping->ea, *cblock);
+	struct entry *e = to_entry(&mapping->es, *cblock);
 	entry_set_pending(e, false);
 
 	if(success){
@@ -691,7 +685,7 @@ void writeback_complete(mapping* mapping, unsigned *cblock, bool success){
 }
 
 void set_dirty_after_write(mapping* mapping, unsigned *cblock, bool dirty){
-	struct entry *e = get_entry(&mapping->ea, *cblock);
+	struct entry *e = to_entry(&mapping->es, *cblock);
 
 	if(entry_get_pending(e)){
 		entry_set_dirty(e, dirty);
