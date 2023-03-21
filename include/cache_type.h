@@ -17,7 +17,7 @@ struct entry
 	unsigned hash_next;
 	unsigned prev;
 	unsigned next;
-	unsigned short param : 2;				// dirty 1, pending_work 1
+	unsigned short param : 2;
 	char full_path_name[MAX_PATH_SIZE + 1]; // '\0'
 	unsigned cache_page_index;
 };
@@ -67,32 +67,31 @@ typedef struct
 	unsigned promotion_time;
 	unsigned demotion_time;
 	unsigned writeback_time;
-
 	work_queue wq;
 } mapping;
 
 typedef struct
 {
 	char *bdev_name;
-	unsigned block_size;			 // default 512 bytes
-	unsigned device_size;			 // block number
-	unsigned cache_block_num;		 // cache block (32KB)
+	unsigned block_size;			 // 通常是 512 Bytes
+	unsigned device_size;			 // LBA的數量
+	unsigned cache_block_num;		 // cache block的數量 (cache block 32KB)
 	unsigned blocks_per_page;		 // 4KB / 512 = 8
 	unsigned blocks_per_cache_block; // 32KB / 512 = 64
 } device;
 
 typedef struct
 {
-	bool running;
-	unsigned count; // users and admin number
-	spinlock lock;	// protect count
+	bool running;	// 是否已經init成功
+	unsigned count; // 使用人數(包含admin)
+	spinlock lock;	// protect init, link cache
 } state;
 
 struct cache
 {
-	state cache_state; // for share cache
-	device cache_dev;  // SSD infomation
-	mapping cache_map; // mapping table
+	state cache_state; // share cache 的管理
+	device cache_dev;  // SSD的資訊，由SPDK負責
+	mapping cache_map; // 管理hash table, clean, dirty, free queue
 
 	pthread_t mg_worker; // 週期性的去work queue找work
 	pthread_t wb_worker; // 週期性的發起writeback

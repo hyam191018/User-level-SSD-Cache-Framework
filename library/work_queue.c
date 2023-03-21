@@ -69,7 +69,6 @@ bool remove_work(work_queue *wq)
 
 bool peak_work(work_queue *wq, char *full_path_name, unsigned *cache_page_index)
 {
-
     if (is_empty(wq))
     {
         return false;

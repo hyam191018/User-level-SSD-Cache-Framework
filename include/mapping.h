@@ -9,7 +9,6 @@
 
 #include "cache_type.h"
 
-/* in udm_cache_mapping.c */
 int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num);
 int link_mapping(mapping *mapping);
 int free_mapping(mapping *mapping);

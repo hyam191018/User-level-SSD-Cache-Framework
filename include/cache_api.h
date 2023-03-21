@@ -13,20 +13,46 @@
 #include "config.h"
 #include "pio.h"
 
-/* in udm_cache_api.c */
-/* return 0 if success */
-int init_udm_cache(void);        // open and init
-int link_udm_cache(void);        // opan and map
-int free_udm_cache(void);        // unmap
-int exit_udm_cache(void);        // unlink
-void force_exit_udm_cache(void); // for debug
+/*
+ * Description: init share memory space, wakeup workers, called by admin
+ * Return:  0, if success
+ */
+int init_udm_cache(void);
+
+/*
+ * Description: map to share memory space, called by admin
+ * Return:  0, if success
+ */
+int link_udm_cache(void);
+
+/*
+ * Description: unmap from share memory space, called by user
+ * Return:  0, if success
+ */
+int free_udm_cache(void);
+
+/*
+ * Description: unlink share memory space, called by admin
+ * Return:  0, if success
+ */
+int exit_udm_cache(void);
+
+/*
+ * Description: force to unlink share memory, avoid lock (for debug)
+ * Return:  No return value
+ */
+void force_exit_udm_cache(void);
+
+/*
+ * Description: print udm-cache mapping info
+ * Return:  No return value
+ */
 void info_udm_cache(void);
 
-int wakeup_mg_worker(void);
-int shutdown_mg_worker(void);
-int wakeup_wb_worker(void);
-int shutdown_wb_worker(void);
-
+/*
+ * Description: submit a page io to udm-cache-target
+ * Return:  0, if success
+ */
 int submit_pio(struct pio *pio);
 
 #endif

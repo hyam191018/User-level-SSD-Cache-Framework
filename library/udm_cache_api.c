@@ -6,6 +6,106 @@
 
 static struct cache *shared_cache = NULL;
 
+static void *migration(void *arg)
+{
+    struct timespec ts = {0, MIGRATION_DELAY};
+    while (1)
+    {
+        if (!do_migration_work(&shared_cache->cache_map))
+        {
+            // 沒事做的話，檢查是否有取消請求
+            pthread_testcancel();
+            nanosleep(&ts, NULL);
+        }
+    }
+    return NULL;
+}
+
+static int wakeup_mg_worker(void)
+{
+    if (!shared_cache)
+    {
+        printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if (shared_cache->mg_worker != 0)
+    {
+        printf("Error: mg_worker is running\n");
+        return 1;
+    }
+    return pthread_create(&shared_cache->mg_worker, NULL, &migration, NULL);
+}
+
+static int shutdown_mg_worker(void)
+{
+    if (!shared_cache)
+    {
+        printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if (shared_cache->mg_worker == 0)
+    {
+        printf("Error: mg_worker is not running\n");
+        return 1;
+    }
+    pthread_cancel(shared_cache->mg_worker);
+    int rc = pthread_join(shared_cache->mg_worker, NULL);
+    shared_cache->mg_worker = 0;
+    return rc;
+}
+
+static void *writeback(void *arg)
+{
+    struct timespec ts = {0, WRITEBACK_DELAY};
+    while (1)
+    {
+        if (!do_writeback_work(&shared_cache->cache_map))
+        {
+            // 沒事做的話，檢查是否有取消請求
+            pthread_testcancel();
+            nanosleep(&ts, NULL);
+        }
+    }
+    return NULL;
+}
+
+static int wakeup_wb_worker(void)
+{
+    if (!shared_cache)
+    {
+        printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if (shared_cache->wb_worker != 0)
+    {
+        printf("Error: wb_worker is running\n");
+        return 1;
+    }
+
+    return pthread_create(&shared_cache->wb_worker, NULL, &writeback, NULL);
+}
+
+static int shutdown_wb_worker(void)
+{
+    if (!shared_cache)
+    {
+        printf("Error: shared cache is null\n");
+        return 1;
+    }
+    if (shared_cache->wb_worker == 0)
+    {
+        printf("Error: wb_worker is not running\n");
+        return 1;
+    }
+
+    pthread_cancel(shared_cache->wb_worker);
+    int res = pthread_join(shared_cache->wb_worker, NULL);
+    shared_cache->wb_worker = 0;
+    return res;
+}
+
+/* --------------------------------------------------- */
+
 int init_udm_cache(void)
 {
     shared_cache = alloc_shm(SHM_CACHE_NAME, sizeof(struct cache));
@@ -171,108 +271,6 @@ void info_udm_cache(void)
 }
 
 /* --------------------------------------------------- */
-
-static void *migration(void *arg)
-{
-    struct timespec ts = {0, MIGRATION_DELAY};
-    while (1)
-    {
-        if (!do_migration_work(&shared_cache->cache_map))
-        {
-            // 沒事做的話，檢查是否有取消請求
-            pthread_testcancel();
-            nanosleep(&ts, NULL);
-        }
-    }
-    return NULL;
-}
-
-int wakeup_mg_worker(void)
-{
-    if (!shared_cache)
-    {
-        printf("Error: shared cache is null\n");
-        return 1;
-    }
-    if (shared_cache->mg_worker != 0)
-    {
-        printf("Error: mg_worker is running\n");
-        return 1;
-    }
-    return pthread_create(&shared_cache->mg_worker, NULL, &migration, NULL);
-}
-
-int shutdown_mg_worker(void)
-{
-    if (!shared_cache)
-    {
-        printf("Error: shared cache is null\n");
-        return 1;
-    }
-    if (shared_cache->mg_worker == 0)
-    {
-        printf("Error: mg_worker is not running\n");
-        return 1;
-    }
-    pthread_cancel(shared_cache->mg_worker);
-    int rc = pthread_join(shared_cache->mg_worker, NULL);
-    shared_cache->mg_worker = 0;
-    return rc;
-}
-
-static void *writeback(void *arg)
-{
-    struct timespec ts = {0, WRITEBACK_DELAY};
-    while (1)
-    {
-        if (!do_writeback_work(&shared_cache->cache_map))
-        {
-            // 沒事做的話，檢查是否有取消請求
-            pthread_testcancel();
-            nanosleep(&ts, NULL);
-        }
-    }
-    return NULL;
-}
-
-int wakeup_wb_worker(void)
-{
-    if (!shared_cache)
-    {
-        printf("Error: shared cache is null\n");
-        return 1;
-    }
-    if (shared_cache->wb_worker != 0)
-    {
-        printf("Error: wb_worker is running\n");
-        return 1;
-    }
-
-    return pthread_create(&shared_cache->wb_worker, NULL, &writeback, NULL);
-}
-
-int shutdown_wb_worker(void)
-{
-    if (!shared_cache)
-    {
-        printf("Error: shared cache is null\n");
-        return 1;
-    }
-    if (shared_cache->wb_worker == 0)
-    {
-        printf("Error: wb_worker is not running\n");
-        return 1;
-    }
-
-    pthread_cancel(shared_cache->wb_worker);
-    int res = pthread_join(shared_cache->wb_worker, NULL);
-    shared_cache->wb_worker = 0;
-    return res;
-}
-
-/* --------------------------------------------------- */
-
-#define to_cache_page_index(page_index) (page_index >> 3)
 
 int submit_pio(struct pio *pio)
 {

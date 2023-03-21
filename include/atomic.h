@@ -14,9 +14,22 @@ typedef struct
     atomic_int locked;
 } spinlock;
 
-/* in atomic.c */
+/*
+ * Description: init lock to 0
+ * Return:  No return value
+ */
 void spinlock_init(spinlock *lock);
+
+/*
+ * Description: try to get lock and set it to 1
+ * Return:  No return value
+ */
 void spinlock_lock(spinlock *lock);
+
+/*
+ * Description: release lock to 0
+ * Return:  No return value
+ */
 void spinlock_unlock(spinlock *lock);
 
 #endif
