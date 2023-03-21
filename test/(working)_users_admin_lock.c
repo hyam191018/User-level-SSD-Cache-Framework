@@ -5,24 +5,24 @@
 #include <time.h>	/* random */
 #include <pthread.h> /* pthread */
 
-#define users 1
+#define users 10
 #define test_time 1000000
-#define EXCEPT 50	// 期望的hit ration
+#define EXCEPT 80	// 期望的hit ration
 #define to_cache_page_index(page_index) (page_index >> 3)
 
 // 期望的hit ratio = 裝置大小 / 檔案大小
 // 50% , 裝置有100G ， 那檔案應該要有200G
 const int MAX_PAGE_INDEX = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE / 1024 * 100 / EXCEPT / 4;
 
-
+/* write setdirty 會出錯!!! */
 mapping mp;
 
 static void* user_func(void *arg){
 	for(int i = 0; i< test_time;i++){
 		char* name = "test";
-		unsigned page_index = rand()%MAX_PAGE_INDEX;
+		unsigned page_index = rand() % MAX_PAGE_INDEX;
 		unsigned cblock;
-		lookup_mapping(&mp, name, page_index, &cblock) ? printf("hit\n") : printf("miss\n");	
+		lookup_mapping(&mp, name, page_index, &cblock);
 	}
 	return NULL;
 }
@@ -44,7 +44,6 @@ int main(void){
 	pthread_t worker;
 	for(int i=0;i<users;i++) pthread_create(&user[i], NULL, user_func, NULL);
 	pthread_create(&worker, NULL, worker_func, NULL);
-
 	for(int i=0;i<users;i++) pthread_join(user[i], NULL);
 	pthread_join(worker, NULL);
 
