@@ -2,10 +2,10 @@
 #define WORK_QUEUE_H
 
 /*
- *	Author: Hyam
- *	Date: 2023/03/21
- *	Description: 由users提交work，admin取得work，work queue中的work不可重複
- *                  (解 1 consumer N producer 問題)
+ *  Author: Hyam
+ *  Date: 2023/03/21
+ *  Description: 由users提交work，admin取得work，work queue中的work不可重複
+ *              (解 1 consumer N producer 問題)
  */
 
 #include "atomic.h"

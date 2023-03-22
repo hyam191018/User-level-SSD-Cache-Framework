@@ -2,9 +2,9 @@
 #define MAPPING_H
 
 /*
- *	Author: Hyam
- *	Date: 2023/03/19
- *	Description: 管理mapping資訊
+ *  Author: Hyam
+ *  Date: 2023/03/19
+ *  Description: 管理mapping資訊
  */
 
 #include "cache_type.h"

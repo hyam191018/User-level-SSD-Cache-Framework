@@ -1,5 +1,5 @@
-#ifndef STDIN_H
-#define STDIN_H
+#ifndef STDINC_H
+#define STDINC_H
 
 #include <fcntl.h>
 #include <pthread.h>
