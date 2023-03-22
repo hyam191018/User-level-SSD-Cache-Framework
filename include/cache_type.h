@@ -16,7 +16,7 @@ struct entry {
     unsigned hash_next;
     unsigned prev;
     unsigned next;
-    unsigned short param : 2;
+    unsigned short param : 3;
     char full_path_name[MAX_PATH_SIZE + 1];  // '\0'
     unsigned cache_page_index;
 };
