@@ -154,34 +154,50 @@ static void entry_set_pending(struct entry *e, bool pending) {
     if (pending) {
         e->param |= 1;
     } else {
-        e->param &= 0;
+        e->param &= ~1;
     }
 }
 
 static bool entry_get_pending(struct entry *e) {
     if (!e) {
-        printf("MSG: entry is null\n");
+        printf("MSG: Get pending fail, entry is null\n");
         return false;
     }
-    unsigned n = e->param;
-    return (n << 15) >> 15;
+    return e->param & 1;
 }
 
 static void entry_set_dirty(struct entry *e, bool dirty) {
     if (dirty) {
-        e->param |= 2;
+        e->param |= (1 << 1);
     } else {
-        e->param &= ~2;
+        e->param &= ~(1 << 1);
     }
 }
 
 static bool entry_get_dirty(struct entry *e) {
     if (!e) {
-        printf("MSG: entry is null\n");
+        printf("MSG: Get dirty fail, entry is null\n");
         return false;
     }
     unsigned n = e->param;
-    return (n << 14) >> 15;
+    return (n & (1 << 1)) != 0;
+}
+
+static void entry_set_alloc(struct entry *e, bool alloc) {
+    if (alloc) {
+        e->param |= (1 << 2);
+    } else {
+        e->param &= ~(1 << 2);
+    }
+}
+
+static bool entry_get_alloc(struct entry *e) {
+    if (!e) {
+        printf("MSG: Get alloc fail, entry is null\n");
+        return false;
+    }
+    unsigned n = e->param;
+    return (n & (1 << 2)) != 0;
 }
 
 static struct entry *alloc_entry(struct entry_alloc *ea) {
@@ -191,12 +207,14 @@ static struct entry *alloc_entry(struct entry_alloc *ea) {
     }
     e = l_pop_head(ea->es, &ea->free);
     init_entry(e);
+    entry_set_alloc(e, true);
     ea->nr_allocated++;
     return e;
 }
 
 static void free_entry(struct entry_alloc *ea, struct entry *e) {
     ea->nr_allocated--;
+    entry_set_alloc(e, false);
     l_add_tail(ea->es, &ea->free, e);
 }
 
@@ -212,7 +230,7 @@ static unsigned infer_cblock(mapping *mapping, struct entry *e) {
 
 /* --------------------------------------------------- */
 
-/* 演算法是用chatGPT產生的: djb2 hash */
+/*  djb2 hash */
 static unsigned hash_32(char *full_path_name, unsigned cache_page_index,
                         unsigned long long hash_bits) {
     unsigned hash_val = 5381;
@@ -426,19 +444,107 @@ void info_mapping(mapping *mapping) {
            mapping->miss_time, hit_ratio);
     spinlock_unlock(&mapping->mapping_lock);
 }
+
 /* --------------------------------------------------- */
 
-bool do_writeback_work(mapping *mapping) {
-    unsigned cblock;
-    unsigned success;
-    if (writeback_get_dirty_cblock(mapping, &cblock)) {
-        printf("( SSD to HDD )\n");
-        success = true;
-        writeback_complete(mapping, &cblock, success);
+static bool promotion_free_to_clean(mapping *mapping, char *full_path_name,
+                                    unsigned cache_page_index, unsigned *cblock) {
+    spinlock_lock(&mapping->mapping_lock);
+
+    if (allocator_empty(&mapping->ea)) {
+        spinlock_unlock(&mapping->mapping_lock);
+        return false;
+    }
+
+    struct entry *e = alloc_entry(&mapping->ea);
+    entry_set_pending(e, true);
+    entry_set_dirty(e, false);
+    strcpy(e->full_path_name, full_path_name);
+    e->full_path_name[strlen(full_path_name)] = '\0';
+    e->cache_page_index = cache_page_index;
+    *cblock = infer_cblock(mapping, e);
+
+    spinlock_unlock(&mapping->mapping_lock);
+    return true;
+}
+
+static void promotion_complete(mapping *mapping, unsigned *cblock, bool success) {
+    spinlock_lock(&mapping->mapping_lock);
+    struct entry *e = to_entry(&mapping->es, *cblock);
+    entry_set_pending(e, false);
+
+    if (success) {
+        mapping->promotion_time++;
+        // !h, !q, a -> h, q, a
+        h_insert(&mapping->table, e);
+        l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+    } else {
+        // !h, !q, a -> !h, !q, !a
+        free_entry(&mapping->ea, e);
+    }
+    spinlock_unlock(&mapping->mapping_lock);
+}
+
+static bool demotion_clean_to_free(mapping *mapping) {
+    spinlock_lock(&mapping->mapping_lock);
+
+    if (mapping->clean.nr_elts <= (mapping->cblock_num >> 1)) {
+        spinlock_unlock(&mapping->mapping_lock);
         return true;
     }
+    mapping->demotion_time++;
+    /* get entry from clean list */
+    // h, q, a -> !h, !q, !a
+    struct entry *e = l_head(&mapping->es, &mapping->clean);
+    l_del(&mapping->es, &mapping->clean, e);
+    h_remove(&mapping->table, e);
+    free_entry(&mapping->ea, e);
+
+    spinlock_unlock(&mapping->mapping_lock);
     return false;
 }
+
+static bool writeback_dirty_to_clean(mapping *mapping, unsigned *cblock) {
+    spinlock_lock(&mapping->mapping_lock);
+
+    if (!mapping->dirty.nr_elts) {
+        spinlock_unlock(&mapping->mapping_lock);
+        return false;
+    }
+
+    struct entry *e = l_head(&mapping->es, &mapping->dirty);
+    // 是否正在搬移
+    if (entry_get_pending(e)) {
+        spinlock_unlock(&mapping->mapping_lock);
+        return false;
+    }
+    entry_set_pending(e, true);
+    entry_set_dirty(e, false);
+    l_del(&mapping->es, &mapping->dirty, e);
+    *cblock = infer_cblock(mapping, e);
+
+    spinlock_unlock(&mapping->mapping_lock);
+    return true;
+}
+
+static void writeback_complete(mapping *mapping, unsigned *cblock, bool success) {
+    spinlock_lock(&mapping->mapping_lock);
+
+    struct entry *e = to_entry(&mapping->es, *cblock);
+    entry_set_pending(e, false);
+
+    if (success) {
+        // h, !q, a -> h, q, a
+        mapping->writeback_time++;
+        l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+    } else {
+        // h, !q, a -> h, q, a
+        l_add_head(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+    }
+    spinlock_unlock(&mapping->mapping_lock);
+}
+
+/* --------------------------------------------------- */
 
 bool do_migration_work(mapping *mapping) {
     char full_path_name[MAX_PATH_SIZE];
@@ -447,19 +553,29 @@ bool do_migration_work(mapping *mapping) {
     bool success;
     /* get a work */
     if (peak_work(&mapping->wq, full_path_name, &cache_page_index)) {
-        if (promotion_get_free_cblock(mapping, full_path_name, cache_page_index, &cblock)) {
-            printf("( HDD to SSD )\n");
+        if (promotion_free_to_clean(mapping, full_path_name, cache_page_index, &cblock)) {
+            // printf("( HDD to SSD )\n");
             success = true;  // HDD to SSD
             promotion_complete(mapping, &cblock, success);
-        } else if (demotion_get_clean_cblock(mapping, &cblock)) {
-            success = true;  // update metadata
-            demotion_complete(mapping, &cblock, success);
-        } else if (writeback_get_dirty_cblock(mapping, &cblock)) {
-            printf("( SSD to HDD )\n");
+        } else if (demotion_clean_to_free(mapping)) {
+        } else if (writeback_dirty_to_clean(mapping, &cblock)) {
+            // printf("( SSD to HDD )\n");
             success = true;  // SSD to HDD
             writeback_complete(mapping, &cblock, success);
         }
         remove_work(&mapping->wq);
+        return true;
+    }
+    return false;
+}
+
+bool do_writeback_work(mapping *mapping) {
+    unsigned cblock;
+    unsigned success;
+    if (writeback_dirty_to_clean(mapping, &cblock)) {
+        // printf("( SSD to HDD )\n");
+        success = true;
+        writeback_complete(mapping, &cblock, success);
         return true;
     }
     return false;
@@ -471,12 +587,19 @@ bool do_migration_work(mapping *mapping) {
 
 bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index, unsigned *cblock) {
     spinlock_lock(&mapping->mapping_lock);
+
     struct entry *e = h_lookup(&mapping->table, full_path_name, to_cache_page_index(page_index));
     if (e) {
         mapping->hit_time++;
+        // 判斷是否在clean queue，將其移動到clean queue mru端
+        if (!entry_get_pending(e) && !entry_get_dirty(e)) {
+            l_del(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+            l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+        }
         *cblock = infer_cblock(mapping, e);
     } else {
         mapping->miss_time++;
+        // 告知udm-cache，將其搬移到SSD
         insert_work(&mapping->wq, full_path_name, strlen(full_path_name),
                     to_cache_page_index(page_index));
     }
@@ -487,155 +610,48 @@ bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index,
 bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned page_index,
                                 unsigned *cblock) {
     spinlock_lock(&mapping->mapping_lock);
-    bool res = true;
+
     struct entry *e = h_lookup(&mapping->table, full_path_name, to_cache_page_index(page_index));
     if (e) {
         mapping->hit_time++;
-        *cblock = (e ? infer_cblock(mapping, e) : 0);
-        /* hit */
-        res = true;
-        goto end;
+        // 判斷是否在clean queue，將其移動到clean queue mru端
+        if (!entry_get_pending(e) && !entry_get_dirty(e)) {
+            l_del(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+            l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+        }
+        *cblock = infer_cblock(mapping, e);
     } else {
-        mapping->miss_time++;
-    }
-
-    e = alloc_entry(&mapping->ea);
-    if (!e) {
-        /* insert fail */
-        res = false;
-        goto end;
-    }
-
-    /* build new entry */
-    entry_set_pending(e, false);
-    entry_set_dirty(e, true);
-    strcpy(e->full_path_name, full_path_name);
-    e->cache_page_index = to_cache_page_index(page_index);
-
-    /* push into hash table */
-    h_insert(&mapping->table, e);
-    l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
-    *cblock = infer_cblock(mapping, e);
-end:
-    spinlock_unlock(&mapping->mapping_lock);
-    return res;
-}
-
-bool promotion_get_free_cblock(mapping *mapping, char *full_path_name, unsigned cache_page_index,
-                               unsigned *cblock) {
-    spinlock_lock(&mapping->mapping_lock);
-    bool res = true;
-    /* check whether the free list is empty */
-    if (allocator_empty(&mapping->ea)) {
-        res = false;
-        goto end;
-    }
-    /* get entry form free list */
-    struct entry *e = alloc_entry(&mapping->ea);
-    strcpy(e->full_path_name, full_path_name);
-    e->cache_page_index = cache_page_index;
-    entry_set_pending(e, true);
-    *cblock = infer_cblock(mapping, e);
-end:
-    spinlock_unlock(&mapping->mapping_lock);
-    return res;
-}
-
-void promotion_complete(mapping *mapping, unsigned *cblock, bool success) {
-    spinlock_lock(&mapping->mapping_lock);
-    struct entry *e = to_entry(&mapping->es, *cblock);
-    entry_set_pending(e, false);
-
-    if (success) {
-        // !h, !q, a -> h, q, a
-        entry_set_dirty(e, false);
-        h_insert(&mapping->table, e);
-        l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
-        mapping->promotion_time++;
-    } else {
-        // !h, !q, a -> !h, !q, !a
-        free_entry(&mapping->ea, e);
+        mapping->miss_time--;
+        // 直接搬到 hash table & dirty queue
+        if (!allocator_empty(&mapping->ea)) {
+            e = alloc_entry(&mapping->ea);
+            entry_set_dirty(e, true);
+            strcpy(e->full_path_name, full_path_name);
+            e->full_path_name[strlen(full_path_name)] = '\0';
+            e->cache_page_index = to_cache_page_index(page_index);
+            h_insert(&mapping->table, e);
+            l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+            *cblock = infer_cblock(mapping, e);
+        }
     }
     spinlock_unlock(&mapping->mapping_lock);
-}
-
-bool demotion_get_clean_cblock(mapping *mapping, unsigned *cblock) {
-    spinlock_lock(&mapping->mapping_lock);
-    bool res = true;
-    /* get entry from clean list */
-    if (mapping->clean.nr_elts <= (mapping->cblock_num >> 1)) {
-        res = false;
-        goto end;
-    }
-
-    /* get entry form clean list */
-    struct entry *e = l_pop_head(&mapping->es, &mapping->clean);
-    entry_set_pending(e, true);
-    *cblock = infer_cblock(mapping, e);
-end:
-    spinlock_unlock(&mapping->mapping_lock);
-    return res;
-}
-
-void demotion_complete(mapping *mapping, unsigned *cblock, bool success) {
-    spinlock_lock(&mapping->mapping_lock);
-    struct entry *e = to_entry(&mapping->es, *cblock);
-    entry_set_pending(e, false);
-
-    if (success) {
-        // h, !q, a -> !h, !q, !a
-        h_remove(&mapping->table, e);
-        free_entry(&mapping->ea, e);
-        mapping->demotion_time++;
-    } else {
-        // h, !q, a -> h, q, a
-        l_add_head(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
-    }
-    spinlock_unlock(&mapping->mapping_lock);
-}
-
-bool writeback_get_dirty_cblock(mapping *mapping, unsigned *cblock) {
-    spinlock_lock(&mapping->mapping_lock);
-    bool res = true;
-    /* get entry from dirty list */
-    if (!mapping->dirty.nr_elts) {
-        res = false;
-        goto end;
-    }
-
-    struct entry *e = l_pop_head(&mapping->es, &mapping->dirty);
-    entry_set_pending(e, true);
-    *cblock = infer_cblock(mapping, e);
-end:
-    spinlock_unlock(&mapping->mapping_lock);
-    return res;
-}
-
-void writeback_complete(mapping *mapping, unsigned *cblock, bool success) {
-    spinlock_lock(&mapping->mapping_lock);
-    struct entry *e = to_entry(&mapping->es, *cblock);
-    entry_set_pending(e, false);
-
-    if (success) {
-        // h, !q, a -> h, q, a
-        entry_set_dirty(e, false);
-        l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
-        mapping->writeback_time++;
-    } else {
-        // h, !q, a -> h, q, a
-        l_add_head(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
-    }
-    spinlock_unlock(&mapping->mapping_lock);
+    return (e != NULL);
 }
 
 void set_dirty_after_write(mapping *mapping, unsigned *cblock, bool dirty) {
     spinlock_lock(&mapping->mapping_lock);
+
     struct entry *e = to_entry(&mapping->es, *cblock);
+    // 有極低的機率 write cache時，該cblock被demotion掉，故需確認他還存在
+    if (!entry_get_alloc(e)) {
+        spinlock_unlock(&mapping->mapping_lock);
+        return;
+    }
     if (entry_get_pending(e)) {
-        entry_set_dirty(e, dirty);
+        entry_set_dirty(e, true);
     } else {
         l_del(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
-        entry_set_dirty(e, dirty);
+        entry_set_dirty(e, true);
         l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
     }
     spinlock_unlock(&mapping->mapping_lock);
