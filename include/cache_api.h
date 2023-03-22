@@ -2,11 +2,11 @@
 #define CACHE_API_H
 
 /*
- * Author: Hyam
- * Date: 2023/03/19
- * Description: udm-cache的操作接口，包含建立、提交與刪除等
- *  admin: init > running > exit
- *  users: link > running > free
+ *  Author: Hyam
+ *  Date: 2023/03/19
+ *  Description: udm-cache的操作接口，包含建立、提交與刪除等
+ *              admin: init > running > exit
+ *              users: link > running > free
  */
 
 #include "cache_type.h"
