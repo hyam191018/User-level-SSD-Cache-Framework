@@ -53,6 +53,6 @@ void info_udm_cache(void);
  * Description: submit a page io to udm-cache-target
  * Return:  0, if success
  */
-int submit_pio(struct pio *pio);
+int submit_pio(struct pio* pio);
 
 #endif

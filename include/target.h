@@ -14,7 +14,8 @@
 /*
  * Description: start processing the request
  * Return:  0, if success
+ *          >0, for error cnt
  */
-int _submit_pio(struct cache *cache, struct pio *pio);
+int _submit_pio(struct cache* cache, struct pio* pio);
 
 #endif
