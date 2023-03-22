@@ -2,9 +2,9 @@
 #define CONFIG_H
 
 /*
- *	Author: Hyam
- *	Date: 2023/03/17
- *	Description: 對整個udm-cache架構的變數定義集合
+ *  Author: Hyam
+ *  Date: 2023/03/17
+ *  Description: 對整個udm-cache架構的變數定義集合
  */
 
 typedef enum { READ, WRITE, DISCARD } operate;
