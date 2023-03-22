@@ -1,45 +1,34 @@
 #include "work_queue.h"
 
-void init_work_queue(work_queue *wq)
-{
+void init_work_queue(work_queue *wq) {
     wq->front = 0;
     wq->rear = 0;
     wq->size = 0;
     spinlock_init(&wq->lock);
 }
 
-static bool is_full(work_queue *wq)
-{
-    return wq->size == MAX_WORKQUEUE_SIZE;
-}
+static bool is_full(work_queue *wq) { return wq->size == MAX_WORKQUEUE_SIZE; }
 
-static bool is_empty(work_queue *wq)
-{
-    return wq->size == 0;
-}
+static bool is_empty(work_queue *wq) { return wq->size == 0; }
 
-static bool is_contain(work_queue *wq, char *full_path_name, unsigned path_size, unsigned cache_page_index)
-{
-    for (int i = wq->front; i != wq->rear; i = (i + 1) % MAX_WORKQUEUE_SIZE)
-    {
+static bool is_contain(work_queue *wq, char *full_path_name, unsigned path_size,
+                       unsigned cache_page_index) {
+    for (int i = wq->front; i != wq->rear; i = (i + 1) % MAX_WORKQUEUE_SIZE) {
         if (wq->works[i].cache_page_index == cache_page_index &&
-            memcmp(wq->works[i].full_path_name, full_path_name, path_size) == 0)
-        {
+            memcmp(wq->works[i].full_path_name, full_path_name, path_size) == 0) {
             return true;
         }
     }
     return false;
 }
 
-bool insert_work(work_queue *wq, char *full_path_name, unsigned path_size, unsigned cache_page_index)
-{
-    if (is_full(wq))
-    {
+bool insert_work(work_queue *wq, char *full_path_name, unsigned path_size,
+                 unsigned cache_page_index) {
+    if (is_full(wq)) {
         return false;
     }
     spinlock_lock(&wq->lock);
-    if (is_contain(wq, full_path_name, path_size, cache_page_index))
-    {
+    if (is_contain(wq, full_path_name, path_size, cache_page_index)) {
         spinlock_unlock(&wq->lock);
         return false;
     }
@@ -53,11 +42,9 @@ bool insert_work(work_queue *wq, char *full_path_name, unsigned path_size, unsig
     return true;
 }
 
-bool remove_work(work_queue *wq)
-{
+bool remove_work(work_queue *wq) {
     spinlock_lock(&wq->lock);
-    if (is_empty(wq))
-    {
+    if (is_empty(wq)) {
         spinlock_unlock(&wq->lock);
         return false;
     }
@@ -67,10 +54,8 @@ bool remove_work(work_queue *wq)
     return true;
 }
 
-bool peak_work(work_queue *wq, char *full_path_name, unsigned *cache_page_index)
-{
-    if (is_empty(wq))
-    {
+bool peak_work(work_queue *wq, char *full_path_name, unsigned *cache_page_index) {
+    if (is_empty(wq)) {
         return false;
     }
     spinlock_lock(&wq->lock);

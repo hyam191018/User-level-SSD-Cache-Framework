@@ -1,11 +1,11 @@
 #include "pio.h"
+
 #include "stdinc.h"
 
-struct pio *create_pio(char *full_path_name, unsigned page_index, operate operation, void *buffer, unsigned pio_cnt)
-{
+struct pio *create_pio(char *full_path_name, unsigned page_index, operate operation, void *buffer,
+                       unsigned pio_cnt) {
     struct pio *new_pio = (struct pio *)malloc(sizeof(struct pio));
-    if (!new_pio)
-    {
+    if (!new_pio) {
         return NULL;
     }
     new_pio->full_path_name = full_path_name;
@@ -17,45 +17,39 @@ struct pio *create_pio(char *full_path_name, unsigned page_index, operate operat
     return new_pio;
 }
 
-void append_pio(struct pio *head, void *buffer)
-{
+void append_pio(struct pio *head, void *buffer) {
     struct pio *current = head;
-    while (current->next != NULL)
-    {
+    while (current->next != NULL) {
         current = current->next;
     }
-    current->next = create_pio(current->full_path_name, current->page_index + 1, current->operation, buffer, current->pio_cnt);
+    current->next = create_pio(current->full_path_name, current->page_index + 1, current->operation,
+                               buffer, current->pio_cnt);
 }
 
-void free_pio(struct pio *head)
-{
-    if (head == NULL)
-    {
+void free_pio(struct pio *head) {
+    if (head == NULL) {
         return;
     }
     free_pio(head->next);
     free(head);
 }
 
-void print_pio(struct pio *head)
-{
+void print_pio(struct pio *head) {
     struct pio *current = head;
-    while (current != NULL)
-    {
+    while (current != NULL) {
         printf("------------------------------\n");
         printf("full path name = %s\n", current->full_path_name);
         printf("page index = %d\n", current->page_index);
-        switch (current->operation)
-        {
-        case READ:
-            printf("operation = READ\n");
-            break;
-        case WRITE:
-            printf("operation = WRITE\n");
-            break;
-        default:
-            printf("operation = UNKNOWN\n");
-            break;
+        switch (current->operation) {
+            case READ:
+                printf("operation = READ\n");
+                break;
+            case WRITE:
+                printf("operation = WRITE\n");
+                break;
+            default:
+                printf("operation = UNKNOWN\n");
+                break;
         }
         printf("buf = %p\n", current->buffer);
         printf("pio count = %d\n", current->pio_cnt);

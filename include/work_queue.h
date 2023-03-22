@@ -46,8 +46,7 @@ bool insert_work(work_queue* wq, char* full_path_name, unsigned path_size,
  * Return:  true, if success
  *          false, if queue is empty
  */
-bool peak_work(work_queue* wq, char* full_path_name,
-               unsigned* cache_page_index);
+bool peak_work(work_queue* wq, char* full_path_name, unsigned* cache_page_index);
 
 /*
  * Description: Remove peak work from the queue

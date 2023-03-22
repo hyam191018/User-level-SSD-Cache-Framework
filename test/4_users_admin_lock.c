@@ -13,8 +13,7 @@
 
 // 期望的 hit ratio = 裝置大小 / 檔案大小
 // 假設期望 hit ration 50%, 裝置有100G, 那檔案應該要有200G
-const int MAX_PAGE_INDEX =
-    CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE / 1024 * 100 / EXCEPT / 4;
+const int MAX_PAGE_INDEX = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE / 1024 * 100 / EXCEPT / 4;
 
 mapping mp;
 
@@ -24,8 +23,7 @@ static void *read_func(void *arg) {
         char *name = "test";
         unsigned page_index = rand() % MAX_PAGE_INDEX;
         unsigned cblock;
-        lookup_mapping(&mp, name, page_index, &cblock) ? printf("Hit\n")
-                                                       : printf("Miss\n");
+        lookup_mapping(&mp, name, page_index, &cblock) ? printf("Hit\n") : printf("Miss\n");
     }
     return NULL;
 }

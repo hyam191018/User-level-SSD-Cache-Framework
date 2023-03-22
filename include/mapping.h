@@ -34,8 +34,7 @@ bool do_migration_work(mapping* mapping);
  * Return:  true, if hit
  *          false, if miss
  */
-bool lookup_mapping(mapping* mapping, char* full_path_name, unsigned page_index,
-                    unsigned* cblock);
+bool lookup_mapping(mapping* mapping, char* full_path_name, unsigned page_index, unsigned* cblock);
 
 /*
  * Description: Search the hash table, if it is a miss, then insert it into the
@@ -43,16 +42,16 @@ bool lookup_mapping(mapping* mapping, char* full_path_name, unsigned page_index,
  * Return:  true, if hit or insert success
  *          false, if no free entry
  */
-bool lookup_mapping_with_insert(mapping* mapping, char* full_path_name,
-                                unsigned page_index, unsigned* cblock);
+bool lookup_mapping_with_insert(mapping* mapping, char* full_path_name, unsigned page_index,
+                                unsigned* cblock);
 
 /*
  * Description: get an entry from free list
  * Return:  true, if success, entry index will store in cblock
  *          false, if no free entry
  */
-bool promotion_get_free_cblock(mapping* mapping, char* full_path_name,
-                               unsigned cache_page_index, unsigned* cblock);
+bool promotion_get_free_cblock(mapping* mapping, char* full_path_name, unsigned cache_page_index,
+                               unsigned* cblock);
 
 /*
  * Description: if success is true, put entry into clean list, otherwise, backto
