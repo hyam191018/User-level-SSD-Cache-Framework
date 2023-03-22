@@ -227,7 +227,7 @@ static unsigned hash_32(char *full_path_name, unsigned cache_page_index,
     }
 
     hash_val = (hash_val << (32 - hash_bits)) >> (32 - hash_bits);
-    return 0;  // TODO
+    return hash_val;
 }
 
 static unsigned roundup_pow_of_two(unsigned n) {
