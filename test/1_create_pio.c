@@ -1,9 +1,9 @@
-#include "pio.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(void)
-{
+#include "pio.h"
+
+int main(void) {
     void *buffer = malloc(4096);
     void *buffer2 = malloc(4096);
     void *buffer3 = malloc(4096);
