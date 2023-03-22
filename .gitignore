@@ -3,6 +3,7 @@
 *.0
 *.pc
 *.sh
+.clang-format
 .vscode
 main*
 testfile
