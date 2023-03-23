@@ -38,8 +38,14 @@ void init_work_queue(work_queue* wq);
  * Return:  true, if success
  *          false, if queue is full or work is contain in queue
  */
-bool insert_work(work_queue* wq, char* full_path_name, unsigned path_size,
-                 unsigned cache_page_index);
+bool insert_work(work_queue* wq, char* full_path_name, unsigned cache_page_index);
+
+/*
+ * Description: Search a work
+ * Return:  true, if work in queue
+ *          false, if not
+ */
+bool iscontain_work(work_queue* wq, char* full_path_name, unsigned cache_page_index);
 
 /*
  * Description: Get a promote request from work queue, called by admin periodly
