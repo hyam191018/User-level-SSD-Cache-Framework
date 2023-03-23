@@ -6,22 +6,31 @@
 
 #include "work_queue.h"
 
-#define MAX_WORKS 100000
+#define MAX_WORKS 100
 #define NUM_PRODUCERS 10
 
 pthread_mutex_t isdone_mutex = PTHREAD_MUTEX_INITIALIZER;
 int producer_done_count = 0;
 bool isdone = false;
 
+static char *gen(int num) {
+    char *str = (char *)malloc(num + 1);  // allocate memory for the string
+    srand(time(NULL));                    // seed the random number generator with the current time
+    for (int i = 0; i < num; i++) {
+        int rand_num = rand() % 26;  // generate a random number between 0 and 25
+        str[i] = 'A' + rand_num;     // convert the random number to an uppercase letter
+    }
+    str[num] = '\0';  // add a null terminator to the end of the string
+    return str;
+}
+
 static void *producer(void *arg) {
     work_queue *wq = (work_queue *)arg;
     int time = 0;
     while (true) {
-        char full_path_name[MAX_PATH_SIZE + 1];
-        unsigned cp = rand() % 10;
-        sprintf(full_path_name, "/path/to/work/%d", cp);
-        if (insert_work(wq, full_path_name, strlen(full_path_name), cp)) {
-            printf("Insert a work\n");
+        char *full_path_name = gen(rand() % 5 + 1);
+        unsigned cp = rand() % 5;
+        if (insert_work(wq, full_path_name, cp)) {
             time++;
             if (time == MAX_WORKS) {
                 break;
@@ -42,7 +51,6 @@ static void *consumer(void *arg) {
         char full_path_name[MAX_PATH_SIZE + 1];
         unsigned cache_page_index;
         if (peak_work(wq, full_path_name, &cache_page_index)) {
-            printf("Remove a work\n");
             remove_work(wq);
         }
     }

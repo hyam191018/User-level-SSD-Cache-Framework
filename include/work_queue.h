@@ -14,7 +14,6 @@
 
 typedef struct {
     char full_path_name[MAX_PATH_SIZE + 1];
-    unsigned path_size;
     unsigned cache_page_index;
 } work;
 

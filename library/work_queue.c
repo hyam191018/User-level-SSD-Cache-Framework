@@ -11,7 +11,7 @@ static bool is_full(work_queue *wq) { return wq->size == MAX_WORKQUEUE_SIZE; }
 
 static bool is_empty(work_queue *wq) { return wq->size == 0; }
 
-bool iscontain_work(work_queue *wq, char *full_path_name, unsigned cache_page_index) {
+static bool is_contain(work_queue *wq, char *full_path_name, unsigned cache_page_index) {
     for (int i = wq->front; i != wq->rear; i = (i + 1) % MAX_WORKQUEUE_SIZE) {
         if (wq->works[i].cache_page_index == cache_page_index &&
             strcmp(wq->works[i].full_path_name, full_path_name) == 0) {
@@ -26,10 +26,11 @@ bool insert_work(work_queue *wq, char *full_path_name, unsigned cache_page_index
         return false;
     }
     spinlock_lock(&wq->lock);
-    if (iscontain_work(wq, full_path_name, cache_page_index)) {
+    if (is_contain(wq, full_path_name, cache_page_index)) {
         spinlock_unlock(&wq->lock);
         return false;
     }
+    printf("Insert a work: %s, %u\n", full_path_name, cache_page_index);
     strcpy(wq->works[wq->rear].full_path_name, full_path_name);
     wq->works[wq->rear].cache_page_index = cache_page_index;
     wq->rear = (wq->rear + 1) % MAX_WORKQUEUE_SIZE;
@@ -57,6 +58,7 @@ bool peak_work(work_queue *wq, char *full_path_name, unsigned *cache_page_index)
     spinlock_lock(&wq->lock);
     strcpy(full_path_name, wq->works[wq->front].full_path_name);
     *cache_page_index = wq->works[wq->front].cache_page_index;
+    printf("Get a work: %s, %u\n", full_path_name, *cache_page_index);
     spinlock_unlock(&wq->lock);
     return true;
 }

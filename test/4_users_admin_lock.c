@@ -1,4 +1,5 @@
 #include <pthread.h> /* pthread */
+#include <signal.h>  /* signal*/
 #include <stdio.h>   /* printf */
 #include <stdlib.h>  /* malloc */
 #include <time.h>    /* random */
@@ -10,11 +11,11 @@
 */
 
 #define do_printf true
-#define read_users 3       // read hit, read miss, write miss (no optimizable) 的使用者數量
-#define write_users 3      // write hit 的使用者數量
-#define optw_users 3       // write miss but optimizable 的使用者數量
-#define test_time 1000000  // 測試次數，一次請求等同4~32KB IO
-#define EXCEPT 50          // 期望的 hit ratio
+#define read_users 3        // read hit, read miss, write miss (no optimizable) 的使用者數量
+#define write_users 7       // write hit 的使用者數量
+#define optw_users 0        // write miss but optimizable 的使用者數量
+#define test_time 10000000  // 測試次數，一次請求等同4~32KB IO
+#define EXCEPT 50           // 期望的 hit ratio
 #define to_cache_page_index(page_index) \
     (page_index >> 3)  // page_index為4KB，cache_page_index為32KB
 
@@ -29,6 +30,12 @@ int count = 0;
 const int MAX_PAGE_INDEX = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE / 1024 * 100 / EXCEPT / 4;
 
 mapping mp;
+
+// debug
+static void sigint_handler(int sig_num) {
+    printf("exit rc = %d\n", exit_mapping());
+    exit(0);
+}
 
 // 模擬 read hit, read miss, write miss (no optimizable)
 static void *read_func(void *arg) {
@@ -131,6 +138,13 @@ static void *wb_worker_func(void *arg) {
 
 int main(void) {
     srand(time(NULL));
+
+    // 設置SIGINT信號的處理程序
+    struct sigaction sig_act;
+    sig_act.sa_handler = sigint_handler;
+    sigemptyset(&sig_act.sa_mask);
+    sig_act.sa_flags = 0;
+    sigaction(SIGINT, &sig_act, NULL);
     printf("init rc = %d\n", init_mapping(&mp, 512, CACHE_BLOCK_NUMBER));
 
     pthread_t read_user[read_users];

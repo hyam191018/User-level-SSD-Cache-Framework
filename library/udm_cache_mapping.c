@@ -460,7 +460,6 @@ static bool promotion_free_to_clean(mapping *mapping, char *full_path_name,
     entry_set_pending(e, true);
     entry_set_dirty(e, false);
     strcpy(e->full_path_name, full_path_name);
-    e->full_path_name[strlen(full_path_name)] = '\0';
     e->cache_page_index = cache_page_index;
     *cblock = infer_cblock(mapping, e);
 
@@ -600,8 +599,7 @@ bool lookup_mapping(mapping *mapping, char *full_path_name, unsigned page_index,
     } else {
         mapping->miss_time++;
         // 告知udm-cache，將其搬移到SSD
-        insert_work(&mapping->wq, full_path_name, strlen(full_path_name),
-                    to_cache_page_index(page_index));
+        insert_work(&mapping->wq, full_path_name, to_cache_page_index(page_index));
     }
     spinlock_unlock(&mapping->mapping_lock);
     return (e != NULL);
@@ -622,12 +620,13 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
         *cblock = infer_cblock(mapping, e);
     } else {
         mapping->miss_time++;
-        // 直接搬到 hash table & dirty queue
+        // 若沒有在work queue，且free entry還有
         if (!allocator_empty(&mapping->ea)) {
+            // 直接搬到 hash table & dirty queue
             e = alloc_entry(&mapping->ea);
             entry_set_dirty(e, true);
+
             strcpy(e->full_path_name, full_path_name);
-            e->full_path_name[strlen(full_path_name)] = '\0';
             e->cache_page_index = to_cache_page_index(page_index);
             h_insert(&mapping->table, e);
             l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
