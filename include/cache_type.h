@@ -55,11 +55,11 @@ typedef struct {
     struct ilist dirty;
     struct hash_table table;
 
-    unsigned hit_time;
-    unsigned miss_time;
-    unsigned promotion_time;
-    unsigned demotion_time;
-    unsigned writeback_time;
+    unsigned long hit_time;
+    unsigned long miss_time;
+    unsigned long promotion_time;
+    unsigned long demotion_time;
+    unsigned long writeback_time;
     work_queue wq;
 } mapping;
 

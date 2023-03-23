@@ -435,12 +435,12 @@ void info_mapping(mapping *mapping) {
     printf("/ free  entrys = %u\n", mapping->ea.free.nr_elts);
     printf("/ clean entrys = %u\n", mapping->clean.nr_elts);
     printf("/ dirty entrys = %u\n", mapping->dirty.nr_elts);
-    unsigned hit_ratio =
+    unsigned long hit_ratio =
         safe_div((mapping->hit_time * 100), (mapping->hit_time + mapping->miss_time));
-    printf("/ promotion time = %u\n", mapping->promotion_time);
-    printf("/ demotion  time = %u\n", mapping->demotion_time);
-    printf("/ writeback time = %u\n", mapping->writeback_time);
-    printf("/ hit time = %u, miss time = %u, hit ratio = %u%%\n", mapping->hit_time,
+    printf("/ promotion time = %lu\n", mapping->promotion_time);
+    printf("/ demotion  time = %lu\n", mapping->demotion_time);
+    printf("/ writeback time = %lu\n", mapping->writeback_time);
+    printf("/ hit time = %lu, miss time = %lu, hit ratio = %lu%%\n", mapping->hit_time,
            mapping->miss_time, hit_ratio);
     spinlock_unlock(&mapping->mapping_lock);
 }
@@ -621,7 +621,7 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
         }
         *cblock = infer_cblock(mapping, e);
     } else {
-        mapping->miss_time--;
+        mapping->miss_time++;
         // 直接搬到 hash table & dirty queue
         if (!allocator_empty(&mapping->ea)) {
             e = alloc_entry(&mapping->ea);
