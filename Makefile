@@ -14,7 +14,7 @@ C_SRCS := \
 ./library/udm_cache_mapping.c \
 
 CFLAGS += -I$(abspath $(CURDIR)/include)
-CFLAGS += -g
+CFLAGS += -g -O2
 
 SPDK_LIB_LIST = $(ALL_MODULES_LIST) event event_bdev
 
