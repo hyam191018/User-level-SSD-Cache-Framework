@@ -366,7 +366,6 @@ static void h_remove(struct hash_table *ht, struct entry *e) {
      * iterate the bucket to remove an item.
      */
     e = __h_lookup(ht, h, e->full_path_name, e->cache_page_index, &prev);
-
     if (e) {
         __h_unlink(ht, h, e, prev);
     }
@@ -489,10 +488,9 @@ static bool demotion_clean_to_free(mapping *mapping) {
 
     if (mapping->clean.nr_elts <= (mapping->cblock_num >> 1)) {
         spinlock_unlock(&mapping->mapping_lock);
-        return true;
+        return false;
     }
     mapping->demotion_time++;
-    /* get entry from clean list */
     // h, q, a -> !h, !q, !a
     struct entry *e = l_head(&mapping->es, &mapping->clean);
     l_del(&mapping->es, &mapping->clean, e);
@@ -500,7 +498,7 @@ static bool demotion_clean_to_free(mapping *mapping) {
     free_entry(&mapping->ea, e);
 
     spinlock_unlock(&mapping->mapping_lock);
-    return false;
+    return true;
 }
 
 static bool writeback_dirty_to_clean(mapping *mapping, unsigned *cblock) {
@@ -621,17 +619,19 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
     } else {
         mapping->miss_time++;
         // 若沒有在work queue，且free entry還有
-        if (!allocator_empty(&mapping->ea)) {
-            // 直接搬到 hash table & dirty queue
-            e = alloc_entry(&mapping->ea);
-            entry_set_dirty(e, true);
-
-            strcpy(e->full_path_name, full_path_name);
-            e->cache_page_index = to_cache_page_index(page_index);
-            h_insert(&mapping->table, e);
-            l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
-            *cblock = infer_cblock(mapping, e);
+        if (contains_work(&mapping->wq, full_path_name, to_cache_page_index(page_index)) ||
+            allocator_empty(&mapping->ea)) {
+            spinlock_unlock(&mapping->mapping_lock);
+            return NULL;
         }
+        e = alloc_entry(&mapping->ea);
+        entry_set_dirty(e, true);
+        strcpy(e->full_path_name, full_path_name);
+        e->cache_page_index = to_cache_page_index(page_index);
+
+        h_insert(&mapping->table, e);
+        l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+        *cblock = infer_cblock(mapping, e);
     }
     spinlock_unlock(&mapping->mapping_lock);
     return (e != NULL);

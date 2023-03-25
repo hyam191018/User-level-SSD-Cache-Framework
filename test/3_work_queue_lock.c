@@ -6,7 +6,7 @@
 
 #include "work_queue.h"
 
-#define MAX_WORKS 100
+#define MAX_WORKS 30
 #define NUM_PRODUCERS 10
 
 pthread_mutex_t isdone_mutex = PTHREAD_MUTEX_INITIALIZER;

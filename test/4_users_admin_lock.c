@@ -12,8 +12,8 @@
 
 #define do_printf true
 #define read_users 3        // read hit, read miss, write miss (no optimizable) 的使用者數量
-#define write_users 7       // write hit 的使用者數量
-#define optw_users 0        // write miss but optimizable 的使用者數量
+#define write_users 3       // write hit 的使用者數量
+#define optw_users 4        // write miss but optimizable 的使用者數量
 #define test_time 10000000  // 測試次數，一次請求等同4~32KB IO
 #define EXCEPT 50           // 期望的 hit ratio
 #define to_cache_page_index(page_index) \
