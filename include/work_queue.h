@@ -32,6 +32,20 @@ typedef struct {
 void init_work_queue(work_queue* wq);
 
 /*
+ * Description: Check work queue state
+ * Return:  true, if work queue is full
+ *          false, if not
+ */
+bool is_full(work_queue* wq);
+
+/*
+ * Description: Check work queue state
+ * Return:  true, if work queue is empty
+ *          false, if not
+ */
+bool is_empty(work_queue* wq);
+
+/*
  * Description: Push a promote request to work queue, called by users, when
  *              cache miss
  * Return:  true, if success

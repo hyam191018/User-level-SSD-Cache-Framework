@@ -7,10 +7,11 @@
 
 /*
  * Author: Hyam
- * Date: 2023/03/19
+ * Date: 2023/03/25
  * Description: 控制程式，可分成admin(管理者)與user(使用者)
  */
 
+// 製作pio
 static void send_pio(void) {
     char* name = "test";
     unsigned page_index = 0;
@@ -29,18 +30,21 @@ static void sigint_handler_for_admin(int sig_num) {
 }
 
 static void sigint_handler_for_user(int sig_num) {
-    free_udm_cache();
+    force_exit_udm_cache();
     exit(0);
 }
 
 static void admin(void) {
-    force_exit_udm_cache();
+    // 一次只能有一個admin
     if (init_udm_cache()) {
         return;
     }
+
+    // print出cache訊息
     info_udm_cache();
     printf(">> admin is running <<\n");
 
+    // 開始執行命令列
     char command[100];
     while (1) {
         printf("udm-cache admin > ");
@@ -67,7 +71,6 @@ static void user(void) {
         free_udm_cache();
         return;
     }
-    info_udm_cache();
 
     char command[100];
     while (1) {
@@ -110,6 +113,8 @@ int main(int argc, char* argv[]) {
         sig_act.sa_flags = 0;
         sigaction(SIGINT, &sig_act, NULL);
         user();
+    } else if (strcmp(argv[1], "clear") == 0) {
+        force_exit_udm_cache();
     } else {
         printf("Invalid argument: %s\n", argv[1]);
         return 1;

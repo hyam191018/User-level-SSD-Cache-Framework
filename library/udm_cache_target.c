@@ -2,15 +2,48 @@
 #include "stdinc.h"
 #include "target.h"
 
+/* --------------------------------------------------- */
+
+static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
+    printf("write to cache\n");
+    set_dirty_after_write(&cache->cache_map, &cblock, true);
+    return 0;
+}
+
+static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
+    printf("read from cache\n");
+    return 0;
+}
+
+static int write_origin(struct cache *cache, struct pio *pio) {
+    printf("write to origin\n");
+    return 0;
+}
+
+static int read_origin(struct cache *cache, struct pio *pio) {
+    printf("read from origin\n");
+    return 0;
+}
+
 static int map_to_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    // printf("MSG: map to cache\n");
+    if (pio->operation == READ) {
+        read_cache(cache, pio, cblock);
+    } else {
+        write_cache(cache, pio, cblock);
+    }
     return 0;
 }
 
 static int map_to_origin(struct cache *cache, struct pio *pio) {
-    // printf("MSG: map to origin\n");
+    if (pio->operation == READ) {
+        read_origin(cache, pio);
+    } else {
+        write_origin(cache, pio);
+    }
     return 0;
 }
+
+/* --------------------------------------------------- */
 
 static int check_pio(struct pio *pio) { return (8 - (pio->page_index & 7)) >= pio->pio_cnt; }
 

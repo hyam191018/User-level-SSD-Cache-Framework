@@ -20,7 +20,13 @@
 int init_udm_cache(void);
 
 /*
- * Description: map to share memory space, called by admin
+ * Description: unlink share memory space, called by admin
+ * Return:  0, if success
+ */
+int exit_udm_cache(void);
+
+/*
+ * Description: map to share memory space, called by user
  * Return:  0, if success
  */
 int link_udm_cache(void);
@@ -30,12 +36,6 @@ int link_udm_cache(void);
  * Return:  0, if success
  */
 int free_udm_cache(void);
-
-/*
- * Description: unlink share memory space, called by admin
- * Return:  0, if success
- */
-int exit_udm_cache(void);
 
 /*
  * Description: force to unlink share memory, avoid lock (for debug)

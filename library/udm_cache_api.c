@@ -11,7 +11,9 @@ static void *migration(void *arg) {
     while (1) {
         if (!do_migration_work(&shared_cache->cache_map)) {
             // 沒事做的話，檢查是否有取消請求
-            pthread_testcancel();
+            if (is_empty(&shared_cache->cache_map.wq)) {
+                pthread_testcancel();
+            }
             nanosleep(&ts, NULL);
         }
     }
@@ -47,7 +49,7 @@ static int shutdown_mg_worker(void) {
 
 static void *writeback(void *arg) {
     struct timespec ts = {0, WRITEBACK_DELAY};
-    while (1) {
+    while (true) {
         if (!do_writeback_work(&shared_cache->cache_map)) {
             // 沒事做的話，檢查是否有取消請求
             pthread_testcancel();
@@ -79,7 +81,6 @@ static int shutdown_wb_worker(void) {
         printf("Error: wb_worker is not running\n");
         return 1;
     }
-
     pthread_cancel(shared_cache->wb_worker);
     int res = pthread_join(shared_cache->wb_worker, NULL);
     shared_cache->wb_worker = 0;
@@ -93,21 +94,15 @@ int init_udm_cache(void) {
     if (!shared_cache) {
         return 1;
     }
-    shared_cache->cache_dev.bdev_name = alloc_shm(SHM_BDEV_NAME, SHM_BDEV_NAME_SIZE);
-    if (!shared_cache->cache_dev.bdev_name) {
-        return 1;
-    }
     if (shared_cache->cache_state.running) {
         printf("Error: init_udm_cache - admin is running\n");
         return 1;
     }
 
-    /* build device: from spdk */
-    strncpy(shared_cache->cache_dev.bdev_name, BDEV_NAME, SHM_BDEV_NAME_SIZE - 1);
-    shared_cache->cache_dev.bdev_name[SHM_BDEV_NAME_SIZE - 1] =
-        '\0';  // make sure string is null-terminated
+    /* build device: from spdk  TODO */
+    strcpy(shared_cache->cache_dev.bdev_name, BDEV_NAME);
     shared_cache->cache_dev.block_size = 512;
-    shared_cache->cache_dev.device_size = 10000;
+    shared_cache->cache_dev.device_size = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE;
     shared_cache->cache_dev.cache_block_num = CACHE_BLOCK_NUMBER;
     shared_cache->cache_dev.blocks_per_page = 8;
     shared_cache->cache_dev.blocks_per_cache_block = 64;
@@ -116,6 +111,7 @@ int init_udm_cache(void) {
         printf("Error: Cache device size is not enough for setting cblock number\n");
         return 1;
     }
+
     if (init_mapping(&shared_cache->cache_map, shared_cache->cache_dev.block_size,
                      shared_cache->cache_dev.cache_block_num)) {
         return 1;
@@ -124,12 +120,12 @@ int init_udm_cache(void) {
     wakeup_wb_worker();
     spinlock_init(&shared_cache->cache_state.lock);
     shared_cache->cache_state.running = true;
-    shared_cache->cache_state.count = 0; /* admin */
+    shared_cache->cache_state.count = 0;
     return 0;
 }
 
 int link_udm_cache(void) {
-    shared_cache = alloc_shm(SHM_CACHE_NAME, sizeof(struct cache));
+    shared_cache = link_shm(SHM_CACHE_NAME, sizeof(struct cache));
     if (!shared_cache) {
         return 1;
     }
@@ -137,18 +133,11 @@ int link_udm_cache(void) {
         printf("Error: link_udm_cache - shared cache uninitialized\n");
         return 1;
     }
-    shared_cache->cache_dev.bdev_name = alloc_shm(SHM_BDEV_NAME, SHM_BDEV_NAME_SIZE);
-    if (!shared_cache->cache_dev.bdev_name) {
-        return 1;
-    }
     if (link_mapping(&shared_cache->cache_map)) {
+        printf("Error: link_mapping fail\n");
         return 1;
     }
-    if (!shared_cache->cache_state.running) {
-        printf("Error: link_udm_cache - shared cache uninitialized\n");
-        unmap_shm(shared_cache, sizeof(struct cache));
-        return 1;
-    }
+
     spinlock_lock(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count++;
     spinlock_unlock(&shared_cache->cache_state.lock);
@@ -164,14 +153,20 @@ int free_udm_cache(void) {
         printf("Error: free_udm_cache - shared cache uninitialized\n");
         return 1;
     }
-    int rc = 0;
+    if (free_mapping(&shared_cache->cache_map)) {
+        printf("Error: link_mapping fail\n");
+        return 1;
+    }
+
     spinlock_lock(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count--;
     spinlock_unlock(&shared_cache->cache_state.lock);
-    rc += free_mapping(&shared_cache->cache_map);
-    rc += unmap_shm(shared_cache->cache_dev.bdev_name, SHM_BDEV_NAME_SIZE);
-    rc += unmap_shm(shared_cache, sizeof(struct cache));
-    return rc;
+
+    if (unmap_shm(shared_cache, sizeof(struct cache))) {
+        return 1;
+    }
+    shared_cache = NULL;
+    return 0;
 }
 
 int exit_udm_cache(void) {
@@ -179,11 +174,13 @@ int exit_udm_cache(void) {
         printf("Error: exit_udm_cache - shared cache uninitialized\n");
         return 1;
     }
-    shutdown_wb_worker();
-    shutdown_mg_worker();
+    if (!shared_cache->cache_state.running) {
+        printf("Error: exit_udm_cache - shared cache uninitialized\n");
+        return 1;
+    }
     while (true) {
         spinlock_lock(&shared_cache->cache_state.lock);
-        if (!shared_cache->cache_state.count) {
+        if (shared_cache->cache_state.count <= 0) {
             spinlock_unlock(&shared_cache->cache_state.lock);
             break;
         }
@@ -191,21 +188,28 @@ int exit_udm_cache(void) {
         spinlock_unlock(&shared_cache->cache_state.lock);
         sleep(1);
     }
-    int rc = 0;
-    rc += free_mapping(&shared_cache->cache_map);
-    rc += unmap_shm(shared_cache->cache_dev.bdev_name, SHM_BDEV_NAME_SIZE);
-    rc += unmap_shm(shared_cache, sizeof(struct cache));
-    rc += exit_mapping();
-    rc += unlink_shm(SHM_BDEV_NAME);
-    rc += unlink_shm(SHM_CACHE_NAME);
-    return rc;
+    shutdown_wb_worker();
+    shutdown_mg_worker();
+    if (free_mapping(&shared_cache->cache_map)) {
+        return 1;
+    }
+    if (unmap_shm(shared_cache, sizeof(struct cache))) {
+        return 1;
+    }
+    if (exit_mapping()) {
+        return 1;
+    }
+    if (unlink_shm(SHM_CACHE_NAME)) {
+        return 1;
+    }
+    shared_cache = NULL;
+    return 0;
 }
 
 void force_exit_udm_cache(void) {
     shutdown_wb_worker();
     shutdown_mg_worker();
     exit_mapping();
-    unlink_shm(SHM_BDEV_NAME);
     unlink_shm(SHM_CACHE_NAME);
 }
 
@@ -221,10 +225,8 @@ void info_udm_cache(void) {
     printf("---> Information of cache device <---\n");
     printf("/ bdev name = %s\n", shared_cache->cache_dev.bdev_name);
     printf("/ block_size = %u\n", shared_cache->cache_dev.block_size);
-    printf("/ device_size = %u\n", shared_cache->cache_dev.device_size);
-    printf("/ cache_block_num = %u\n", shared_cache->cache_dev.cache_block_num);
-    printf("/ blocks_per_page = %u\n", shared_cache->cache_dev.blocks_per_page);
-    printf("/ blocks_per_cache_block = %u\n", shared_cache->cache_dev.blocks_per_cache_block);
+    printf("/ device_size = %lu\n", shared_cache->cache_dev.device_size);
+    printf("/ cache_block_num = %lu\n", shared_cache->cache_dev.cache_block_num);
     info_mapping(&shared_cache->cache_map);
 }
 

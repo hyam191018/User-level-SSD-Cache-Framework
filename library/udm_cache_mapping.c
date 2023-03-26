@@ -20,6 +20,18 @@ static int alloc_es(struct entry_space *es, unsigned nr_entries) {
     return 0;
 }
 
+static int link_es(struct entry_space *es, unsigned nr_entries) {
+    if (!nr_entries) {
+        return 1;
+    }
+    es->begin = link_shm(SHM_ENTRY_SPACE, sizeof(struct entry) * nr_entries);
+    if (!es->begin) {
+        return 1;
+    }
+    es->end = es->begin + nr_entries;
+    return 0;
+}
+
 static int unmap_es(struct entry_space *es, unsigned nr_entries) {
     if (!es->begin || !nr_entries) {
         return 1;
@@ -209,6 +221,7 @@ static struct entry *alloc_entry(struct entry_alloc *ea) {
     init_entry(e);
     entry_set_alloc(e, true);
     ea->nr_allocated++;
+
     return e;
 }
 
@@ -279,12 +292,10 @@ static int link_hash_table(struct hash_table *ht, struct entry_space *es, unsign
 
     ht->es = es;
     nr_buckets = roundup_pow_of_two(nr_entries);
-    ht->hash_bits = 31 - __builtin_clz(nr_buckets);
-    ht->buckets = alloc_shm(SHM_BUCKETS, nr_buckets * sizeof(*ht->buckets));
+    ht->buckets = link_shm(SHM_BUCKETS, nr_buckets * sizeof(*ht->buckets));
     if (!ht->buckets) {
         return 1;
     }
-
     return 0;
 }
 
@@ -400,9 +411,12 @@ int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num) {
 
 int link_mapping(mapping *mapping) {
     spinlock_lock(&mapping->mapping_lock);
+    if (link_es(&mapping->es, mapping->cblock_num)) {
+        spinlock_unlock(&mapping->mapping_lock);
+        return 1;
+    }
     link_allocator(&mapping->ea, &mapping->es);
-    if (alloc_es(&mapping->es, mapping->cblock_num) ||
-        link_hash_table(&mapping->table, &mapping->es, mapping->cblock_num)) {
+    if (link_hash_table(&mapping->table, &mapping->es, mapping->cblock_num)) {
         spinlock_unlock(&mapping->mapping_lock);
         return 1;
     }
@@ -412,8 +426,11 @@ int link_mapping(mapping *mapping) {
 
 int free_mapping(mapping *mapping) {
     spinlock_lock(&mapping->mapping_lock);
-    if (unmap_es(&mapping->es, mapping->cblock_num) ||
-        unmap_hash_table(&mapping->table, mapping->cblock_num)) {
+    if (unmap_hash_table(&mapping->table, mapping->cblock_num)) {
+        spinlock_unlock(&mapping->mapping_lock);
+        return 1;
+    }
+    if (unmap_es(&mapping->es, mapping->cblock_num)) {
         spinlock_unlock(&mapping->mapping_lock);
         return 1;
     }
@@ -449,7 +466,6 @@ void info_mapping(mapping *mapping) {
 static bool promotion_free_to_clean(mapping *mapping, char *full_path_name,
                                     unsigned cache_page_index, unsigned *cblock) {
     spinlock_lock(&mapping->mapping_lock);
-
     if (allocator_empty(&mapping->ea)) {
         spinlock_unlock(&mapping->mapping_lock);
         return false;
@@ -461,7 +477,6 @@ static bool promotion_free_to_clean(mapping *mapping, char *full_path_name,
     strcpy(e->full_path_name, full_path_name);
     e->cache_page_index = cache_page_index;
     *cblock = infer_cblock(mapping, e);
-
     spinlock_unlock(&mapping->mapping_lock);
     return true;
 }

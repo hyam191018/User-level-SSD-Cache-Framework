@@ -7,9 +7,19 @@ void init_work_queue(work_queue *wq) {
     spinlock_init(&wq->lock);
 }
 
-static bool is_full(work_queue *wq) { return wq->size == MAX_WORKQUEUE_SIZE - 1; }
+bool is_full(work_queue *wq) {
+    spinlock_lock(&wq->lock);
+    bool res = (wq->size == MAX_WORKQUEUE_SIZE);
+    spinlock_unlock(&wq->lock);
+    return res;
+}
 
-static bool is_empty(work_queue *wq) { return wq->size == 0; }
+bool is_empty(work_queue *wq) {
+    spinlock_lock(&wq->lock);
+    bool res = (wq->size == 0);
+    spinlock_unlock(&wq->lock);
+    return res;
+}
 
 bool contains_work(work_queue *wq, char *full_path_name, unsigned cache_page_index) {
     spinlock_lock(&wq->lock);
@@ -27,7 +37,8 @@ bool contains_work(work_queue *wq, char *full_path_name, unsigned cache_page_ind
 
 bool insert_work(work_queue *wq, char *full_path_name, unsigned cache_page_index) {
     spinlock_lock(&wq->lock);
-    if (is_full(wq)) {
+    /* queue is full */
+    if (wq->size == MAX_WORKQUEUE_SIZE - 1) {
         spinlock_unlock(&wq->lock);
         return false;
     }
@@ -36,9 +47,10 @@ bool insert_work(work_queue *wq, char *full_path_name, unsigned cache_page_index
         if (wq->works[i].cache_page_index == cache_page_index &&
             strcmp(wq->works[i].full_path_name, full_path_name) == 0) {
             spinlock_unlock(&wq->lock);
-            return true;
+            return false;
         }
     }
+    // printf("Insert work:%s %u\n", full_path_name, cache_page_index);
     strcpy(wq->works[wq->rear].full_path_name, full_path_name);
     wq->works[wq->rear].cache_page_index = cache_page_index;
     wq->rear = (wq->rear + 1) % MAX_WORKQUEUE_SIZE;
@@ -49,7 +61,8 @@ bool insert_work(work_queue *wq, char *full_path_name, unsigned cache_page_index
 
 bool remove_work(work_queue *wq) {
     spinlock_lock(&wq->lock);
-    if (is_empty(wq)) {
+    /* queue is empty */
+    if (wq->size == 0) {
         spinlock_unlock(&wq->lock);
         return false;
     }
@@ -61,12 +74,14 @@ bool remove_work(work_queue *wq) {
 
 bool peak_work(work_queue *wq, char *full_path_name, unsigned *cache_page_index) {
     spinlock_lock(&wq->lock);
-    if (is_empty(wq)) {
+    /* queue is empty */
+    if (wq->size == 0) {
         spinlock_unlock(&wq->lock);
         return false;
     }
     strcpy(full_path_name, wq->works[wq->front].full_path_name);
     *cache_page_index = wq->works[wq->front].cache_page_index;
+    // printf("get work:%s %u\n", full_path_name, *cache_page_index);
     spinlock_unlock(&wq->lock);
     return true;
 }

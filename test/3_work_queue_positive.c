@@ -49,7 +49,15 @@ int main(int argc, char* argv[]) {
     }
 
     // Test inserting duplicate work
-    if (!insert_work(&wq, "/path/to/file1", 0)) {
+    if (insert_work(&wq, "/path/to/file1", 0)) {
+        printf("Insert work /path/to/file1 0.\n");
+    } else {
+        printf("Duplicate work couldn't be inserted.\n");
+    }
+
+    if (insert_work(&wq, "/path/to/file1", 0)) {
+        printf("Insert work /path/to/file1 0.\n");
+    } else {
         printf("Duplicate work couldn't be inserted.\n");
     }
 

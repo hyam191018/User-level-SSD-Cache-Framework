@@ -20,8 +20,6 @@ typedef enum { READ, WRITE, DISCARD } operate;
 
 /* share memory */
 #define SHM_CACHE_NAME "/udm_cache"
-#define SHM_BDEV_NAME_SIZE 10
-#define SHM_BDEV_NAME "/bdev_name"
 #define SHM_ENTRY_SPACE "/es"
 #define SHM_BUCKETS "/buckets"
 

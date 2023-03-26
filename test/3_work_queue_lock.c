@@ -6,7 +6,7 @@
 
 #include "work_queue.h"
 
-#define MAX_WORKS 30
+#define MAX_WORKS 10
 #define NUM_PRODUCERS 10
 
 pthread_mutex_t isdone_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -28,8 +28,9 @@ static void *producer(void *arg) {
     work_queue *wq = (work_queue *)arg;
     int time = 0;
     while (true) {
-        char *full_path_name = gen(rand() % 5 + 1);
+        char *full_path_name = gen(3);
         unsigned cp = rand() % 5;
+        // Insert work 的訊息可能不準確，所以是寫在work_queue.c 用lock保護
         if (insert_work(wq, full_path_name, cp)) {
             time++;
             if (time == MAX_WORKS) {

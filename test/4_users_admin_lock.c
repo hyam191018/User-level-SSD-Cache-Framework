@@ -6,16 +6,32 @@
 
 #include "cache_type.h"
 #include "mapping.h"
-/*
-    因為這個測試比較重要，所以我註解寫比較繁瑣
-*/
+
+/*     實驗記錄 r3 w3 optw4 跑100萬次
+ *
+ * ---> Information of mapping table <---
+ * / free  entrys = 0
+ * / clean entrys = 1024
+ * / dirty entrys = 0
+ * / promotion time = 1475686
+ * / demotion  time = 1525890
+ * / writeback time = 3601398
+ * / hit time = 4997965, miss time = 5002035, hit ratio = 50%
+ * free rc = 0
+ * exit rc = 0
+ * 282.48user
+ * 107.89system
+ * 2:51.35elapsed
+ * 227%CPU (0avgtext+0avgdata 6904maxresident)k
+ * 0inputs+0outputs (0major+613minor)pagefaults 0swaps
+ */
 
 #define do_printf true
-#define read_users 3        // read hit, read miss, write miss (no optimizable) 的使用者數量
-#define write_users 3       // write hit 的使用者數量
-#define optw_users 4        // write miss but optimizable 的使用者數量
-#define test_time 10000000  // 測試次數，一次請求等同4~32KB IO
-#define EXCEPT 50           // 期望的 hit ratio
+#define read_users 3       // read hit, read miss, write miss (no optimizable) 的使用者數量
+#define write_users 3      // write hit 的使用者數量
+#define optw_users 4       // write miss but optimizable 的使用者數量
+#define test_time 1000000  // 測試次數，一次請求等同4~32KB IO
+#define EXCEPT 50          // 期望的 hit ratio
 #define to_cache_page_index(page_index) \
     (page_index >> 3)  // page_index為4KB，cache_page_index為32KB
 
