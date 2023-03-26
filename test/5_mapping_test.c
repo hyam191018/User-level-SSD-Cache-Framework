@@ -47,12 +47,6 @@ const int MAX_PAGE_INDEX = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE / 1024 * 100 / 
 
 mapping mp;
 
-// debug
-static void sigint_handler(int sig_num) {
-    printf("exit rc = %d\n", exit_mapping());
-    exit(0);
-}
-
 // 模擬 read hit, read miss, write miss (no optimizable)
 static void *read_func(void *arg) {
     for (int i = 0; i < test_time; i++) {
@@ -155,12 +149,6 @@ static void *wb_worker_func(void *arg) {
 int main(void) {
     srand(time(NULL));
 
-    // 設置SIGINT信號的處理程序
-    struct sigaction sig_act;
-    sig_act.sa_handler = sigint_handler;
-    sigemptyset(&sig_act.sa_mask);
-    sig_act.sa_flags = 0;
-    sigaction(SIGINT, &sig_act, NULL);
     printf("init rc = %d\n", init_mapping(&mp, 512, CACHE_BLOCK_NUMBER));
 
     pthread_t read_user[read_users];
