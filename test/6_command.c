@@ -24,26 +24,8 @@ static void send_pio(void) {
     free(buffer);
 }
 
-static void sigint_handler_for_admin(int sig_num) {
-    force_exit_udm_cache();
-    exit(0);
-}
-
-static void sigint_handler_for_user(int sig_num) {
-    force_exit_udm_cache();
-    exit(0);
-}
-
 static void admin(void) {
-    // 一次只能有一個admin
-    if (init_udm_cache()) {
-        return;
-    }
-
-    // print出cache訊息
-    info_udm_cache();
-    printf(">> admin is running <<\n");
-
+    printf("%d init rc = %d\n", getpid(), init_udm_cache());
     // 開始執行命令列
     char command[100];
     while (1) {
@@ -53,25 +35,23 @@ static void admin(void) {
         }
         // 這裡可以對使用者輸入的指令進行處理或執行
         command[strcspn(command, "\n")] = 0;  // 刪除字串中的換行符號
-        if (strcmp(command, "q") == 0) {
-            break;
-        } else if (strcmp(command, "s") == 0) {
+        if (strcmp(command, "send") == 0) {
             send_pio();
-        } else if (strcmp(command, "i") == 0) {
+        } else if (strcmp(command, "info") == 0) {
             info_udm_cache();
+        } else if (strcmp(command, "quit") == 0) {
+            break;
         } else {
             printf("Not a command\n");
         }
+        sleep(1);
     }
-    exit_udm_cache();
+    printf("%d exit rc = %d\n", getpid(), exit_udm_cache());
 }
 
 static void user(void) {
-    if (link_udm_cache()) {
-        free_udm_cache();
-        return;
-    }
-
+    printf("%d link rc = %d\n", getpid(), link_udm_cache());
+    // 開始執行命令列
     char command[100];
     while (1) {
         printf("udm-cache user > ");
@@ -80,38 +60,29 @@ static void user(void) {
         }
         // 這裡可以對使用者輸入的指令進行處理或執行
         command[strcspn(command, "\n")] = 0;  // 刪除字串中的換行符號
-        if (strcmp(command, "q") == 0) {
-            break;
-        } else if (strcmp(command, "s") == 0) {
+        if (strcmp(command, "send") == 0) {
             send_pio();
-        } else if (strcmp(command, "i") == 0) {
+        } else if (strcmp(command, "info") == 0) {
             info_udm_cache();
+        } else if (strcmp(command, "quit") == 0) {
+            break;
         } else {
             printf("Not a command\n");
         }
+        sleep(1);
     }
-    free_udm_cache();
+    printf("%d free rc = %d\n", getpid(), free_udm_cache());
 }
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        printf("Usage: %s [admin/user]\n", argv[0]);
+        printf("Usage: %s [admin/user/clear]\n", argv[0]);
         return 1;
     }
-    // 設置SIGINT信號的處理程序
-    struct sigaction sig_act;
 
     if (strcmp(argv[1], "admin") == 0) {
-        sig_act.sa_handler = sigint_handler_for_admin;
-        sigemptyset(&sig_act.sa_mask);
-        sig_act.sa_flags = 0;
-        sigaction(SIGINT, &sig_act, NULL);
         admin();
     } else if (strcmp(argv[1], "user") == 0) {
-        sig_act.sa_handler = sigint_handler_for_user;
-        sigemptyset(&sig_act.sa_mask);
-        sig_act.sa_flags = 0;
-        sigaction(SIGINT, &sig_act, NULL);
         user();
     } else if (strcmp(argv[1], "clear") == 0) {
         force_exit_udm_cache();
