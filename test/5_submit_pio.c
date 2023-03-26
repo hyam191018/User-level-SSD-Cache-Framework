@@ -22,17 +22,17 @@ static void send_pio(void) {
 
 // 模擬使用者程式
 static void function(void) {
-    // 為何不需要link??!
-    // 似乎是直接沿用了 parent init好的share memory
+    // 等待 主程式init完成
+    sleep(2);
+    link_udm_cache();
     send_pio();
+    free_udm_cache();
 }
 
 int main(int argc, char* argv[]) {
     pid_t pid[USER_NUMBER];  // 宣告子進程pid的陣列
 
     force_exit_udm_cache();
-    // 主程式建立 share cache
-    printf("%d init rc %d\n", getpid(), init_udm_cache());
 
     // 使用迴圈建立多個子進程
     for (int i = 0; i < USER_NUMBER; i++) {
@@ -45,8 +45,10 @@ int main(int argc, char* argv[]) {
             exit(0);
         }
     }
+    // 主程式建立 share cache
+    printf("%d init rc %d\n", getpid(), init_udm_cache());
 
-    // 父進程等待所有子進程結束
+    // 主程式等待所有子進程結束
     for (int i = 0; i < USER_NUMBER; i++) {
         waitpid(pid[i], NULL, 0);
     }
