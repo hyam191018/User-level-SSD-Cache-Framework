@@ -4,7 +4,7 @@
 /*
  *  Author: Hyam
  *  Date: 2023/03/17
- *  Description: 建立連結、釋放、刪除共享記憶體位置
+ *  Description: 建立、連結、釋放、刪除共享記憶體位置
  */
 
 #include "stdinc.h"

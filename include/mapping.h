@@ -16,14 +16,14 @@ int exit_mapping(void);
 void info_mapping(mapping *mapping);
 
 /*
- * Description: promotion > demotion > writeback
+ * Description: try to promotion > demotion > writeback
  * Return:  true, if done a work
  *          false, if donothing
  */
 bool do_migration_work(mapping *mapping);
 
 /*
- * Description: try to do writeback
+ * Description: try to writeback
  * Return:  true, if done a work
  *          false, if donothing
  */

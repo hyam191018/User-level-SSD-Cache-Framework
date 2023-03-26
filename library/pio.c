@@ -1,7 +1,5 @@
 #include "pio.h"
 
-#include "stdinc.h"
-
 struct pio *create_pio(char *full_path_name, unsigned page_index, operate operation, void *buffer,
                        unsigned pio_cnt) {
     struct pio *new_pio = (struct pio *)malloc(sizeof(struct pio));
