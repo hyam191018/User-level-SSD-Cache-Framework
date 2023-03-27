@@ -1,0 +1,14 @@
+[global]
+ioengine=sync
+
+thread=1
+direct=1
+bs=4k
+rw=randread
+time_based=1
+runtime=10
+filename=testfile
+
+[filename0]
+size=1G
+write_iops_log=4k-read.results
