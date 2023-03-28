@@ -32,18 +32,18 @@ static void myfio_cleanup(struct thread_data *td) {
     printf("exit rc = %d\n", exit_udm_cache());
 }
 
-// 開始做讀寫
+// 開始做讀寫 模擬sync.c
 static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) {
     struct pio *head = NULL;
     switch (io_u->ddir) {
         case DDIR_READ:
             head = create_pio(io_u->file->file_name, io_u->file->fd, io_u->offset >> 12, READ,
-                              io_u->buf, 1);
+                              io_u->xfer_buf, 1);
             submit_pio(head);
             break;
         case DDIR_WRITE:
             head = create_pio(io_u->file->file_name, io_u->file->fd, io_u->offset >> 12, WRITE,
-                              io_u->buf, 1);
+                              io_u->xfer_buf, 1);
             submit_pio(head);
             break;
         default:
