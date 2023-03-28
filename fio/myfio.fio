@@ -15,4 +15,3 @@ filename=testfile
 
 [test]
 size=1G
-iodepth=8
