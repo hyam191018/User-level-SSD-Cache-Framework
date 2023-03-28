@@ -341,12 +341,11 @@ void info_mapping(mapping *mapping) {
     printf("/ free  entrys = %u\n", mapping->ea.free.nr_elts);
     printf("/ clean entrys = %u\n", mapping->clean.nr_elts);
     printf("/ dirty entrys = %u\n", mapping->dirty.nr_elts);
-    unsigned long hit_ratio =
-        safe_div((mapping->hit_time * 100), (mapping->hit_time + mapping->miss_time));
     printf("/ promotion time = %u\n", mapping->promotion_time);
     printf("/ demotion  time = %u\n", mapping->demotion_time);
     printf("/ writeback time = %u\n", mapping->writeback_time);
-    printf("/ hit time = %u, miss time = %u, hit ratio = %lu%%\n", mapping->hit_time,
+    double hit_ratio = safe_div(mapping->hit_time, mapping->hit_time + mapping->miss_time) * 100;
+    printf("/ hit time = %u, miss time = %u, hit ratio = %.2f%%\n", mapping->hit_time,
            mapping->miss_time, hit_ratio);
     spinlock_unlock(&mapping->mapping_lock);
 }

@@ -5,9 +5,9 @@
 #include "cache_api.h"
 #include "stdinc.h"
 
-#define USERS 10      // 使用者數量
-#define ROUND 100000  // 使用者submit次數
-#define EXCEPT 50     // 期望的 hit ratio
+#define USERS 10       // 使用者數量
+#define ROUND 1000000  // 使用者submit次數
+#define EXCEPT 50      // 期望的 hit ratio
 const unsigned long long MAX_PAGE_INDEX =
     (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT * 4ull);
 

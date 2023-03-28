@@ -32,6 +32,6 @@ typedef enum { READ, WRITE, DISCARD } operate;
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 /* instead of a/b*/
-#define safe_div(a, b) ((b != 0) ? (a / b) + !!(a % b) : 0)
+#define safe_div(a, b) ((b != 0) ? ((double)(a) / (double)(b)) : 0.0)
 
 #endif

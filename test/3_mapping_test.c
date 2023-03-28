@@ -13,25 +13,6 @@
  *  Description: 壓力測試 mapping table
  */
 
-/*     實驗記錄 r3 w3 optw4 各跑100萬次
- *
- * ---> Information of mapping table <---
- * / free  entrys = 0
- * / clean entrys = 1024
- * / dirty entrys = 0
- * / promotion time = 1475686
- * / demotion  time = 1525890
- * / writeback time = 3601398
- * / hit time = 4997965, miss time = 5002035, hit ratio = 50%
- * free rc = 0
- * exit rc = 0
- * 282.48user
- * 107.89system
- * 2:51.35elapsed
- * 227%CPU (0avgtext+0avgdata 6904maxresident)k
- * 0inputs+0outputs (0major+613minor)pagefaults 0swaps
- */
-
 #define do_printf false
 #define read_users 3      // read hit, read miss, write miss (no optimizable) 的使用者數量
 #define write_users 3     // write hit 的使用者數量
@@ -192,3 +173,34 @@ int main(void) {
     pthread_join(wb_worker, NULL);
     info_mapping(&mp);
 }
+
+/*     實驗記錄 r3 w3 optw4 各跑100萬次
+ *
+ * ---> Information of mapping table <---
+ * / free  entrys = 0
+ * / clean entrys = 1024
+ * / dirty entrys = 0
+ * / promotion time = 1475686
+ * / demotion  time = 1525890
+ * / writeback time = 3601398
+ * / hit time = 4997965, miss time = 5002035, hit ratio = 50%
+ * free rc = 0
+ * exit rc = 0
+ * 282.48user
+ * 107.89system
+ * 2:51.35elapsed
+ * 227%CPU (0avgtext+0avgdata 6904maxresident)k
+ * 0inputs+0outputs (0major+613minor)pagefaults 0swaps
+ */
+
+/*     實驗記錄 r3 w3 optw4 各跑1000萬次
+ *
+ * ---> Information of mapping table <---
+ * / free  entrys = 0
+ * / clean entrys = 15997
+ * / dirty entrys = 16771
+ * / promotion time = 1569604
+ * / demotion  time = 1828340
+ * / writeback time = 16546748
+ * / hit time = 49956543, miss time = 50043457, hit ratio = 49.96%
+ */
