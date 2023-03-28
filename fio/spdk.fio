@@ -12,7 +12,6 @@ rwmixread=70
 time_based=1
 runtime=10
 norandommap=1
-filename=testfile
 
 [filename0]
 filename=Nvme0n1

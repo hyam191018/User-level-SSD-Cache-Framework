@@ -5,23 +5,23 @@
 /* --------------------------------------------------- */
 
 static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    printf("write to cache\n");
+    // printf("write to cache\n");
     set_dirty_after_write(&cache->cache_map, &cblock, true);
     return 0;
 }
 
 static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    printf("read from cache\n");
+    // printf("read from cache\n");
     return 0;
 }
 
 static int write_origin(struct cache *cache, struct pio *pio) {
-    printf("write to origin\n");
+    // printf("write to origin\n");
     return 0;
 }
 
 static int read_origin(struct cache *cache, struct pio *pio) {
-    printf("read from origin\n");
+    // printf("read from origin\n");
     return 0;
 }
 

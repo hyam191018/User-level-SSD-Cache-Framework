@@ -3,6 +3,7 @@
  *   All rights reserved.
  */
 
+#include "cache_api.h"
 #include "config-host.h"
 #include "fio.h"
 #include "optgroup.h"
@@ -19,6 +20,9 @@
 #include "spdk/util.h"
 #include "spdk_internal/event.h"
 
+#define EXCEPT 70  // 期望的 hit ratio
+const int MAX_PAGE_INDEX = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE / 1024 * 100 / EXCEPT / 4;
+
 static int myfio_setup(struct thread_data *td) {
     printf("myfio_setup\n");
     return 0;
@@ -30,17 +34,25 @@ static int myfio_init(struct thread_data *td) {
 }
 
 static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) {
-    /*
+    char *buffer = malloc(PAGE_SIZE);
+    struct pio *head = NULL;
+
     switch (io_u->ddir) {
         case DDIR_READ:
+            head = create_pio("test", rand() % MAX_PAGE_INDEX, READ, buffer, 8);
+            submit_pio(head);
             break;
         case DDIR_WRITE:
+            head = create_pio("test", rand() % MAX_PAGE_INDEX, WRITE, buffer, 8);
+            submit_pio(head);
             break;
         default:
             assert(false);
             break;
     }
-*/
+
+    free_pio(head);
+    free(buffer);
     return 0;
 }
 
@@ -56,12 +68,13 @@ static struct io_u *myfio_event(struct thread_data *td, int event) {
 }
 
 static int myfio_open(struct thread_data *td, struct fio_file *f) {
-    printf("myfio_open\n");
+    printf("init rc = %d\n", init_udm_cache());
     return 0;
 }
 
 static int myfio_close(struct thread_data *td, struct fio_file *f) {
-    printf("myfio_close\n");
+    info_udm_cache();
+    printf("exit rc = %d\n", exit_udm_cache());
     return 0;
 }
 

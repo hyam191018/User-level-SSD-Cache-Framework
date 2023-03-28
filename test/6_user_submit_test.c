@@ -41,13 +41,7 @@ static void user(void) {
 
     // 使用者程式
     printf("%d link rc = %d\n", getpid(), link_udm_cache());
-    pthread_t user[USERS];
-    for (int i = 0; i < USERS; i++) {
-        pthread_create(&user[i], NULL, user_func, NULL);
-    }
-    for (int i = 0; i < USERS; i++) {
-        pthread_join(user[i], NULL);
-    }
+
     printf("%d free rc = %d\n", getpid(), free_udm_cache());
 
     // 告知admin
@@ -91,17 +85,25 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    pid_t pid = fork();
-    if (pid == -1) {
+    pid_t pid_admin = fork();
+    if (pid_admin == -1) {
         perror("fork");
         exit(1);
-    } else if (pid == 0) {
+    } else if (pid_admin == 0) {
+        admin();
+        exit(0);
+    }
+
+    pid_t pid_user = fork();
+    if (pid_user == -1) {
+        perror("fork");
+        exit(1);
+    } else if (pid_user == 0) {
         user();
         exit(0);
     }
 
-    admin();
-
+    wait(NULL);
     wait(NULL);
 
     if (semctl(sem_id, 0, IPC_RMID, 0) == -1) {
