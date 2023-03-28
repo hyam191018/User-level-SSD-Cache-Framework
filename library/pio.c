@@ -1,13 +1,13 @@
 #include "pio.h"
 
-struct pio *create_pio(char *full_path_name, unsigned page_index, operate operation, void *buffer,
-                       unsigned pio_cnt) {
+struct pio *create_pio(char *full_path_name, int fd, unsigned page_index, operate operation,
+                       void *buffer, unsigned pio_cnt) {
     struct pio *new_pio = (struct pio *)malloc(sizeof(struct pio));
     if (!new_pio) {
         return NULL;
     }
     new_pio->full_path_name = full_path_name;
-    new_pio->fd = 0;
+    new_pio->fd = fd;
     new_pio->page_index = page_index;
     new_pio->operation = operation;
     new_pio->buffer = buffer;
@@ -21,8 +21,8 @@ void append_pio(struct pio *head, void *buffer) {
     while (current->next != NULL) {
         current = current->next;
     }
-    current->next = create_pio(current->full_path_name, current->page_index + 1, current->operation,
-                               buffer, current->pio_cnt);
+    current->next = create_pio(current->full_path_name, current->fd, current->page_index + 1,
+                               current->operation, buffer, current->pio_cnt);
 }
 
 void free_pio(struct pio *head) {

@@ -15,7 +15,7 @@ int main(void) {
     void *buffer3 = malloc(4096);
 
     // 創建PIO
-    struct pio *pio = create_pio("test", 0, READ, buffer, 3);
+    struct pio *pio = create_pio("test", 0, 0, READ, buffer, 3);
 
     append_pio(pio, buffer2);
     append_pio(pio, buffer3);

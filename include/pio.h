@@ -27,8 +27,8 @@ struct pio {
  * Return:  pio address, if success
  *          NULL, if fail
  */
-struct pio* create_pio(char* full_path_name, unsigned page_index, operate operation, void* buffer,
-                       unsigned pio_cnt);
+struct pio* create_pio(char* full_path_name, int fd, unsigned page_index, operate operation,
+                       void* buffer, unsigned pio_cnt);
 
 /*
  * Description: append pio to tail

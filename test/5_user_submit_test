@@ -16,7 +16,7 @@ static void send_pio(void) {
     operate operation = rand() % 2 ? READ : WRITE;
     char* buffer = malloc(PAGE_SIZE);
     unsigned pio_cnt = 8 - page_index % 8;
-    struct pio* head = create_pio(name, page_index, operation, buffer, pio_cnt);
+    struct pio* head = create_pio(name, 0, page_index, operation, buffer, pio_cnt);
     submit_pio(head);
     free_pio(head);
     free(buffer);

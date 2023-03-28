@@ -12,3 +12,5 @@ filename=testfile
 [filename0]
 size=1G
 write_iops_log=4k-read.results
+
+# 7K
