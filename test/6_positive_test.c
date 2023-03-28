@@ -9,8 +9,6 @@
 
 // 建立一個從A開始，每個字母4KB的檔案，大小為24*4KB
 static void build(void) {
-    remove("ptestfile");
-
     int fd;
     void* buffer;
     ssize_t bytes_written;
@@ -88,6 +86,7 @@ int main(int argc, char* argv[]) {
 
     build();
     test();
+    remove("ptestfile");
 
     // 關閉udm-cache
     printf("%d exit rc = %d\n", getpid(), exit_udm_cache());

@@ -104,8 +104,6 @@ int init_udm_cache(void) {
     shared_cache->cache_dev.block_size = 512;
     shared_cache->cache_dev.device_size = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE;
     shared_cache->cache_dev.cache_block_num = CACHE_BLOCK_NUMBER;
-    shared_cache->cache_dev.blocks_per_page = 8;
-    shared_cache->cache_dev.blocks_per_cache_block = 64;
     if (shared_cache->cache_dev.block_size * shared_cache->cache_dev.device_size <
         CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE) {
         printf("Error: Cache device size is not enough for setting cblock number\n");

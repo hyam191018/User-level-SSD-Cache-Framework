@@ -7,8 +7,9 @@ APP = main
 C_SRCS := \
 ./source/main.c \
 ./library/pio.c \
-./library/atomic.c \
 ./library/shm.c \
+./library/spdk.c \
+./library/atomic.c \
 ./library/work_queue.c \
 ./library/udm_cache_api.c  \
 ./library/udm_cache_target.c \

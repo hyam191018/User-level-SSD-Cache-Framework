@@ -66,11 +66,9 @@ typedef struct {
 
 typedef struct {
     char bdev_name[MAX_PATH_SIZE + 1];
-    unsigned block_size;              // 通常是 512 Bytes
-    unsigned long device_size;        // LBA的數量
-    unsigned cache_block_num;         // cache block的數量 (cache block 32KB)
-    unsigned blocks_per_page;         // 4KB / 512 = 8
-    unsigned blocks_per_cache_block;  // 32KB / 512 = 64
+    unsigned block_size;        // 通常是 512 Bytes
+    unsigned long device_size;  // LBA的數量
+    unsigned cache_block_num;   // cache block的數量 (cache block 32KB)
 } device;
 
 typedef struct {
