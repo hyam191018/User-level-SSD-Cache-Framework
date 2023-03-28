@@ -8,38 +8,11 @@
 
 #define INDEXER_NULL ((1u << 28u) - 1u)
 
-static int alloc_es(struct entry_space *es, unsigned nr_entries) {
-    if (!nr_entries) {
-        return 1;
-    }
-    es->begin = alloc_shm(SHM_ENTRY_SPACE, sizeof(struct entry) * nr_entries);
-    if (!es->begin) {
-        return 1;
-    }
-    es->end = es->begin + nr_entries;
+static int alloc_es(struct entry_space *es) {
+    es->begin = &es->entrys[0];
+    es->end = &es->entrys[CACHE_BLOCK_NUMBER - 1];
     return 0;
 }
-
-static int link_es(struct entry_space *es, unsigned nr_entries) {
-    if (!nr_entries) {
-        return 1;
-    }
-    es->begin = link_shm(SHM_ENTRY_SPACE, sizeof(struct entry) * nr_entries);
-    if (!es->begin) {
-        return 1;
-    }
-    es->end = es->begin + nr_entries;
-    return 0;
-}
-
-static int unmap_es(struct entry_space *es, unsigned nr_entries) {
-    if (!es->begin || !nr_entries) {
-        return 1;
-    }
-    return unmap_shm(es->begin, sizeof(struct entry) * nr_entries);
-}
-
-static int unlink_es(void) { return unlink_shm(SHM_ENTRY_SPACE); }
 
 static struct entry *__get_entry(struct entry_space *es, unsigned block) {
     struct entry *e;
@@ -151,8 +124,6 @@ static void init_allocator(struct entry_alloc *ea, struct entry_space *es, unsig
     }
 }
 
-static void link_allocator(struct entry_alloc *ea, struct entry_space *es) { ea->es = es; }
-
 static void init_entry(struct entry *e) {
     e->hash_next = INDEXER_NULL;
     e->prev = INDEXER_NULL;
@@ -261,53 +232,14 @@ static unsigned hash_32(char *full_path_name, unsigned cache_page_index,
     return hash_val;
 }
 
-static unsigned roundup_pow_of_two(unsigned n) {
-    unsigned res = 1;
-    while (res < n) {
-        res <<= 1;
-    }
-    return res;
-}
-
-static int alloc_hash_table(struct hash_table *ht, struct entry_space *es, unsigned nr_entries) {
-    unsigned i, nr_buckets;
-
+static void alloc_hash_table(struct hash_table *ht, struct entry_space *es) {
+    unsigned i;
     ht->es = es;
-    nr_buckets = roundup_pow_of_two(nr_entries);
-    ht->hash_bits = 31 - __builtin_clz(nr_buckets);
-    ht->buckets = alloc_shm(SHM_BUCKETS, nr_buckets * sizeof(*ht->buckets));
-    if (!ht->buckets) {
-        return 1;
-    }
-
-    for (i = 0; i < nr_buckets; i++) {
+    ht->hash_bits = 31 - __builtin_clz(BUCKETS_NUMBER);
+    for (i = 0; i < BUCKETS_NUMBER; i++) {
         ht->buckets[i] = INDEXER_NULL;
     }
-
-    return 0;
 }
-
-static int link_hash_table(struct hash_table *ht, struct entry_space *es, unsigned nr_entries) {
-    unsigned nr_buckets;
-
-    ht->es = es;
-    nr_buckets = roundup_pow_of_two(nr_entries);
-    ht->buckets = link_shm(SHM_BUCKETS, nr_buckets * sizeof(*ht->buckets));
-    if (!ht->buckets) {
-        return 1;
-    }
-    return 0;
-}
-
-static int unmap_hash_table(struct hash_table *ht, unsigned nr_entries) {
-    unsigned nr_buckets = roundup_pow_of_two(nr_entries);
-    if (!ht->buckets || !nr_entries) {
-        return 1;
-    }
-    return unmap_shm(ht->buckets, nr_buckets * sizeof(*ht->buckets));
-}
-
-static int unlink_hash_table(void) { return unlink_shm(SHM_BUCKETS); }
 
 static struct entry *h_head(struct hash_table *ht, unsigned bucket) {
     return to_entry(ht->es, ht->buckets[bucket]);
@@ -388,17 +320,11 @@ int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num) {
     mapping->block_size = block_size;
     mapping->cblock_num = cblock_num;
 
-    if (alloc_es(&mapping->es, mapping->cblock_num)) {
-        return 1;
-    }
-
+    alloc_es(&mapping->es);
     init_allocator(&mapping->ea, &mapping->es, 0, mapping->cblock_num);
     l_init(&mapping->clean);
     l_init(&mapping->dirty);
-
-    if (alloc_hash_table(&mapping->table, &mapping->es, mapping->cblock_num)) {
-        return 1;
-    }
+    alloc_hash_table(&mapping->table, &mapping->es);
 
     mapping->hit_time = 0;
     mapping->miss_time = 0;
@@ -406,42 +332,6 @@ int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num) {
     mapping->demotion_time = 0;
     mapping->writeback_time = 0;
     spinlock_init(&mapping->mapping_lock);
-    return 0;
-}
-
-int link_mapping(mapping *mapping) {
-    spinlock_lock(&mapping->mapping_lock);
-    if (link_es(&mapping->es, mapping->cblock_num)) {
-        spinlock_unlock(&mapping->mapping_lock);
-        return 1;
-    }
-    link_allocator(&mapping->ea, &mapping->es);
-    if (link_hash_table(&mapping->table, &mapping->es, mapping->cblock_num)) {
-        spinlock_unlock(&mapping->mapping_lock);
-        return 1;
-    }
-    spinlock_unlock(&mapping->mapping_lock);
-    return 0;
-}
-
-int free_mapping(mapping *mapping) {
-    spinlock_lock(&mapping->mapping_lock);
-    if (unmap_hash_table(&mapping->table, mapping->cblock_num)) {
-        spinlock_unlock(&mapping->mapping_lock);
-        return 1;
-    }
-    if (unmap_es(&mapping->es, mapping->cblock_num)) {
-        spinlock_unlock(&mapping->mapping_lock);
-        return 1;
-    }
-    spinlock_unlock(&mapping->mapping_lock);
-    return 0;
-}
-
-int exit_mapping(void) {
-    if (unlink_es() || unlink_hash_table()) {
-        return 1;
-    }
     return 0;
 }
 

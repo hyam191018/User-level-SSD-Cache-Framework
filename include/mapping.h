@@ -11,8 +11,6 @@
 
 int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num);
 int link_mapping(mapping *mapping);
-int free_mapping(mapping *mapping);
-int exit_mapping(void);
 void info_mapping(mapping *mapping);
 
 /*

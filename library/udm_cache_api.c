@@ -133,10 +133,6 @@ int link_udm_cache(void) {
         printf("Error: link_udm_cache - shared cache uninitialized\n");
         return 1;
     }
-    if (link_mapping(&shared_cache->cache_map)) {
-        printf("Error: link_mapping fail\n");
-        return 1;
-    }
 
     spinlock_lock(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count++;
@@ -151,10 +147,6 @@ int free_udm_cache(void) {
     }
     if (!shared_cache->cache_state.running) {
         printf("Error: free_udm_cache - shared cache uninitialized\n");
-        return 1;
-    }
-    if (free_mapping(&shared_cache->cache_map)) {
-        printf("Error: link_mapping fail\n");
         return 1;
     }
 
@@ -190,13 +182,7 @@ int exit_udm_cache(void) {
     }
     shutdown_wb_worker();
     shutdown_mg_worker();
-    if (free_mapping(&shared_cache->cache_map)) {
-        return 1;
-    }
     if (unmap_shm(shared_cache, sizeof(struct cache))) {
-        return 1;
-    }
-    if (exit_mapping()) {
         return 1;
     }
     if (unlink_shm(SHM_CACHE_NAME)) {
@@ -209,7 +195,6 @@ int exit_udm_cache(void) {
 void force_exit_udm_cache(void) {
     shutdown_wb_worker();
     shutdown_mg_worker();
-    exit_mapping();
     unlink_shm(SHM_CACHE_NAME);
 }
 

@@ -10,18 +10,17 @@
 typedef enum { READ, WRITE, DISCARD } operate;
 
 /* udm-cache setting */
-#define CACHE_BLOCK_SIZE (1 << 15)    // 32KB
-#define CACHE_BLOCK_NUMBER (1 << 15)  // 32K*32KB=1GB(SSD)
-#define PAGE_SIZE (1 << 12)           // 4KB
-#define MAX_PATH_SIZE (1 << 5)        // full_path_name length
-#define WRITEBACK_DELAY 500000000     // ns (in dm-cache is 500ms)
-#define MIGRATION_DELAY 100000000     // ns (100ms)
+#define CACHE_BLOCK_SIZE (1 << 15)                // 32KB
+#define CACHE_BLOCK_NUMBER (1 << 15)              // 32K*32KB=1GB(SSD)
+#define BUCKETS_NUMBER (CACHE_BLOCK_NUMBER >> 1)  // roundup_pow_of_two
+#define PAGE_SIZE (1 << 12)                       // 4KB
+#define MAX_PATH_SIZE (1 << 5)                    // full_path_name length
+#define WRITEBACK_DELAY 500000000                 // ns (in dm-cache is 500ms)
+#define MIGRATION_DELAY 100000000                 // ns (100ms)
 #define MAX_WORKQUEUE_SIZE (CACHE_BLOCK_NUMBER >> 1)
 
 /* share memory */
 #define SHM_CACHE_NAME "/udm_cache"
-#define SHM_ENTRY_SPACE "/es"
-#define SHM_BUCKETS "/buckets"
 
 /* spdk setting */
 #define BDEV_NAME "Nvme0n1"
