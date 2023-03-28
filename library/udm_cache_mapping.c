@@ -453,10 +453,10 @@ void info_mapping(mapping *mapping) {
     printf("/ dirty entrys = %u\n", mapping->dirty.nr_elts);
     unsigned long hit_ratio =
         safe_div((mapping->hit_time * 100), (mapping->hit_time + mapping->miss_time));
-    printf("/ promotion time = %lu\n", mapping->promotion_time);
-    printf("/ demotion  time = %lu\n", mapping->demotion_time);
-    printf("/ writeback time = %lu\n", mapping->writeback_time);
-    printf("/ hit time = %lu, miss time = %lu, hit ratio = %lu%%\n", mapping->hit_time,
+    printf("/ promotion time = %u\n", mapping->promotion_time);
+    printf("/ demotion  time = %u\n", mapping->demotion_time);
+    printf("/ writeback time = %u\n", mapping->writeback_time);
+    printf("/ hit time = %u, miss time = %u, hit ratio = %lu%%\n", mapping->hit_time,
            mapping->miss_time, hit_ratio);
     spinlock_unlock(&mapping->mapping_lock);
 }
@@ -498,22 +498,38 @@ static void promotion_complete(mapping *mapping, unsigned *cblock, bool success)
     spinlock_unlock(&mapping->mapping_lock);
 }
 
-static bool demotion_clean_to_free(mapping *mapping) {
+static bool demotion_clean_to_free(mapping *mapping, unsigned *cblock) {
     spinlock_lock(&mapping->mapping_lock);
 
     if (mapping->clean.nr_elts <= (mapping->cblock_num >> 1)) {
         spinlock_unlock(&mapping->mapping_lock);
         return false;
     }
-    mapping->demotion_time++;
-    // h, q, a -> !h, !q, !a
     struct entry *e = l_head(&mapping->es, &mapping->clean);
     l_del(&mapping->es, &mapping->clean, e);
-    h_remove(&mapping->table, e);
-    free_entry(&mapping->ea, e);
+    entry_set_pending(e, true);
+    *cblock = infer_cblock(mapping, e);
 
     spinlock_unlock(&mapping->mapping_lock);
     return true;
+}
+
+static void demotion_complete(mapping *mapping, unsigned *cblock, bool success) {
+    spinlock_lock(&mapping->mapping_lock);
+    struct entry *e = to_entry(&mapping->es, *cblock);
+    entry_set_pending(e, false);
+
+    if (success) {
+        // h, !q, a -> !h, !q, !a
+        mapping->demotion_time++;
+        h_remove(&mapping->table, e);
+        free_entry(&mapping->ea, e);
+    } else {
+        // h, !q, a -> h, q, a
+        l_add_tail(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+    }
+
+    spinlock_unlock(&mapping->mapping_lock);
 }
 
 static bool writeback_dirty_to_clean(mapping *mapping, unsigned *cblock) {
@@ -541,7 +557,6 @@ static bool writeback_dirty_to_clean(mapping *mapping, unsigned *cblock) {
 
 static void writeback_complete(mapping *mapping, unsigned *cblock, bool success) {
     spinlock_lock(&mapping->mapping_lock);
-
     struct entry *e = to_entry(&mapping->es, *cblock);
     entry_set_pending(e, false);
 
@@ -569,7 +584,9 @@ bool do_migration_work(mapping *mapping) {
             // printf("( HDD to SSD )\n");
             success = true;  // HDD to SSD
             promotion_complete(mapping, &cblock, success);
-        } else if (demotion_clean_to_free(mapping)) {
+        } else if (demotion_clean_to_free(mapping, &cblock)) {
+            success = true;
+            demotion_complete(mapping, &cblock, success);
         } else if (writeback_dirty_to_clean(mapping, &cblock)) {
             // printf("( SSD to HDD )\n");
             success = true;  // SSD to HDD

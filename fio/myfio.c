@@ -20,9 +20,6 @@
 #include "spdk/util.h"
 #include "spdk_internal/event.h"
 
-#define EXCEPT 70  // 期望的 hit ratio
-const int MAX_PAGE_INDEX = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE / 1024 * 100 / EXCEPT / 4;
-
 static int myfio_setup(struct thread_data *td) {
     printf("myfio_setup\n");
     return 0;
@@ -36,14 +33,13 @@ static int myfio_init(struct thread_data *td) {
 static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) {
     char *buffer = malloc(PAGE_SIZE);
     struct pio *head = NULL;
-
     switch (io_u->ddir) {
         case DDIR_READ:
-            head = create_pio("test", rand() % MAX_PAGE_INDEX, READ, buffer, 8);
+            head = create_pio(io_u->file->file_name, io_u->offset >> 12, READ, io_u->buf, 1);
             submit_pio(head);
             break;
         case DDIR_WRITE:
-            head = create_pio("test", rand() % MAX_PAGE_INDEX, WRITE, buffer, 8);
+            head = create_pio(io_u->file->file_name, io_u->offset >> 12, WRITE, io_u->buf, 1);
             submit_pio(head);
             break;
         default:

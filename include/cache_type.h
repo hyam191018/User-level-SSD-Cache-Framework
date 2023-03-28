@@ -46,7 +46,7 @@ struct hash_table {
 
 typedef struct {
     spinlock mapping_lock;
-    unsigned block_size;
+    unsigned long block_size;
     unsigned cblock_num;
 
     struct entry_space es;
@@ -55,11 +55,11 @@ typedef struct {
     struct ilist dirty;
     struct hash_table table;
 
-    unsigned long hit_time;
-    unsigned long miss_time;
-    unsigned long promotion_time;
-    unsigned long demotion_time;
-    unsigned long writeback_time;
+    unsigned hit_time;
+    unsigned miss_time;
+    unsigned promotion_time;
+    unsigned demotion_time;
+    unsigned writeback_time;
     work_queue wq;
 } mapping;
 
@@ -67,7 +67,7 @@ typedef struct {
     char bdev_name[MAX_PATH_SIZE + 1];
     unsigned block_size;              // 通常是 512 Bytes
     unsigned long device_size;        // LBA的數量
-    unsigned long cache_block_num;    // cache block的數量 (cache block 32KB)
+    unsigned cache_block_num;         // cache block的數量 (cache block 32KB)
     unsigned blocks_per_page;         // 4KB / 512 = 8
     unsigned blocks_per_cache_block;  // 32KB / 512 = 64
 } device;

@@ -226,7 +226,7 @@ void info_udm_cache(void) {
     printf("/ bdev name = %s\n", shared_cache->cache_dev.bdev_name);
     printf("/ block_size = %u\n", shared_cache->cache_dev.block_size);
     printf("/ device_size = %lu\n", shared_cache->cache_dev.device_size);
-    printf("/ cache_block_num = %lu\n", shared_cache->cache_dev.cache_block_num);
+    printf("/ cache_block_num = %u\n", shared_cache->cache_dev.cache_block_num);
     info_mapping(&shared_cache->cache_map);
 }
 

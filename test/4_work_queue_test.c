@@ -52,6 +52,7 @@ static void *consumer(void *arg) {
         char full_path_name[MAX_PATH_SIZE + 1];
         unsigned cache_page_index;
         if (peak_work(wq, full_path_name, &cache_page_index)) {
+            printf("get work:%s %u\n", full_path_name, cache_page_index);
             remove_work(wq);
         }
     }

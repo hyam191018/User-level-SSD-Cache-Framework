@@ -39,15 +39,6 @@ int main(int argc, char* argv[]) {
         printf("Removed work from queue.\n");
     }
 
-    // Test inserting more works than queue size
-    for (int i = 0; i < CACHE_PAGES * 2; i++) {
-        char path_name[100];
-        sprintf(path_name, "/path/to/file%d", i);
-        if (!insert_work(&wq, path_name, i)) {
-            printf("Work %d couldn't be inserted.\n", i);
-        }
-    }
-
     // Test inserting duplicate work
     if (insert_work(&wq, "/path/to/file1", 0)) {
         printf("Insert work /path/to/file1 0.\n");

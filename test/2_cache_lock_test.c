@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     int num_processes = 10;    // 指定建立的子進程數量
     pid_t pid[num_processes];  // 宣告子進程pid的陣列
 
-    // force_exit_udm_cache();
+    force_exit_udm_cache();  // 強制清除已建立shm
     printf("%d init rc %d\n", getpid(), init_udm_cache());
 
     // 使用迴圈建立多個子進程

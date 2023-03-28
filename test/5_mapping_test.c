@@ -27,11 +27,11 @@
  */
 
 #define do_printf false
-#define read_users 3      // read hit, read miss, write miss (no optimizable) 的使用者數量
-#define write_users 3     // write hit 的使用者數量
-#define optw_users 4      // write miss but optimizable 的使用者數量
-#define test_time 100000  // 測試次數，一次請求等同4~32KB IO
-#define EXCEPT 50         // 期望的 hit ratio
+#define read_users 3       // read hit, read miss, write miss (no optimizable) 的使用者數量
+#define write_users 3      // write hit 的使用者數量
+#define optw_users 4       // write miss but optimizable 的使用者數量
+#define test_time 1000000  // 測試次數，一次請求等同4~32KB IO
+#define EXCEPT 50          // 期望的 hit ratio
 #define to_cache_page_index(page_index) \
     (page_index >> 3)  // page_index為4KB，cache_page_index為32KB
 
