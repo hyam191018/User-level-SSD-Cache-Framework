@@ -13,23 +13,20 @@
  *  Description: 壓力測試 mapping table
  */
 
-/*     實驗記錄 r3 w3 optw4 各跑100萬次
- *
+/*     實驗記錄 r3 w3 optw4 各跑10萬次
+ * init rc = 0
  * ---> Information of mapping table <---
  * / free  entrys = 0
- * / clean entrys = 1024
- * / dirty entrys = 0
- * / promotion time = 1475686
- * / demotion  time = 1525890
- * / writeback time = 3601398
- * / hit time = 4997965, miss time = 5002035, hit ratio = 50%
+ * / clean entrys = 16983
+ * / dirty entrys = 15785
+ * / promotion time = 8443
+ * / demotion  time = 5357
+ * / writeback time = 156565
+ * / hit time = 376170, miss time = 623830, hit ratio = 38%
  * free rc = 0
  * exit rc = 0
- * 282.48user
- * 107.89system
- * 2:51.35elapsed
- * 227%CPU (0avgtext+0avgdata 6904maxresident)k
- * 0inputs+0outputs (0major+613minor)pagefaults 0swaps
+ * 4.98user 0.02system 0:02.21elapsed 226%CPU (0avgtext+0avgdata 8672maxresident)k
+ * 0inputs+0outputs (0major+1046minor)pagefaults 0swaps
  */
 
 #define do_printf false
