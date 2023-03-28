@@ -4,6 +4,15 @@
 
 /* --------------------------------------------------- */
 
+static void pio_to_iovec(struct pio *pio, struct iovec *iov, int iov_cnt) {
+    for (int i = 0; i < iov_cnt; i++) {
+        iov[i].iov_base = pio->buffer;
+        iov[i].iov_len = strlen(pio->buffer) < PAGE_SIZE ? strlen(pio->buffer) : PAGE_SIZE;
+        iov[i].iov_len = PAGE_SIZE;
+        pio = pio->next;
+    }
+}
+
 static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
     // printf("write to cache\n");
     set_dirty_after_write(&cache->cache_map, &cblock, true);
@@ -16,31 +25,71 @@ static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
 }
 
 static int write_origin(struct cache *cache, struct pio *pio) {
-    // printf("write to origin\n");
-    return 0;
+    /* pio to iovec */
+    int iov_cnt = pio->pio_cnt;
+    struct iovec *iov = (struct iovec *)malloc(sizeof(struct iovec) * iov_cnt);
+    pio_to_iovec(pio, iov, iov_cnt);
+
+    int res = 0;
+
+    /* open file and direct IO */
+    if (!pio->fd) {
+        int fd = open(pio->full_path_name, O_WRONLY | O_CREAT | O_DIRECT, 0644);
+        if (fd < 0) {
+            printf("Error: open file fail\n");
+            return 1;
+        }
+        res = pwritev(fd, iov, iov_cnt, (pio->page_index << 12));
+        close(fd);
+    } else {
+        res = pwritev(pio->fd, iov, iov_cnt, (pio->page_index << 12));
+    }
+
+    free(iov);
+    return !(res == 0);
 }
 
 static int read_origin(struct cache *cache, struct pio *pio) {
-    // printf("read from origin\n");
-    return 0;
+    /* pio to iovec */
+    int iov_cnt = pio->pio_cnt;
+    struct iovec *iov = (struct iovec *)malloc(sizeof(struct iovec) * iov_cnt);
+    pio_to_iovec(pio, iov, iov_cnt);
+
+    int res = 0;
+
+    /* open file and direct IO */
+    if (!pio->fd) {
+        int fd = open(pio->full_path_name, O_RDONLY | O_CREAT | O_DIRECT, 0644);
+        if (fd < 0) {
+            printf("Error: open file fail\n");
+            return 1;
+        }
+        res = preadv(fd, iov, iov_cnt, (pio->page_index << 12));
+        close(fd);
+    } else {
+        res = preadv(pio->fd, iov, iov_cnt, (pio->page_index << 12));
+    }
+
+    free(iov);
+    return !(res == 0);
 }
 
 static int map_to_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
     if (pio->operation == READ) {
-        read_cache(cache, pio, cblock);
+        return read_cache(cache, pio, cblock);
     } else {
-        write_cache(cache, pio, cblock);
+        return write_cache(cache, pio, cblock);
     }
-    return 0;
+    return 1;
 }
 
 static int map_to_origin(struct cache *cache, struct pio *pio) {
     if (pio->operation == READ) {
-        read_origin(cache, pio);
+        return read_origin(cache, pio);
     } else {
-        write_origin(cache, pio);
+        return write_origin(cache, pio);
     }
-    return 0;
+    return 1;
 }
 
 /* --------------------------------------------------- */
@@ -48,8 +97,7 @@ static int map_to_origin(struct cache *cache, struct pio *pio) {
 static int check_pio(struct pio *pio) { return (8 - (pio->page_index & 7)) >= pio->pio_cnt; }
 
 static int overwritable(struct pio *pio) {
-    // The probability of overwritable is relatively low for 4KB random
-    // read/write
+    /* The probability of overwritable is relatively low for 4KB random read/write */
     return pio->pio_cnt == 8 && (pio->page_index & 0b111) == 0;
 }
 
