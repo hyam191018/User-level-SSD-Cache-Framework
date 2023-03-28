@@ -20,72 +20,60 @@
 #include "spdk/util.h"
 #include "spdk_internal/event.h"
 
-static int myfio_setup(struct thread_data *td) {
-    printf("myfio_setup\n");
-    return 0;
-}
-
+// 開啟udm-cache
 static int myfio_init(struct thread_data *td) {
-    printf("myfio_init\n");
+    printf("init rc = %d\n", init_udm_cache());
     return 0;
 }
 
+// 關閉udm-cache
+static void myfio_cleanup(struct thread_data *td) {
+    info_udm_cache();
+    printf("exit rc = %d\n", exit_udm_cache());
+}
+
+// 開始做讀寫
 static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) {
-    char *buffer = malloc(PAGE_SIZE);
     struct pio *head = NULL;
     switch (io_u->ddir) {
         case DDIR_READ:
-            head = create_pio(io_u->file->file_name, io_u->offset >> 12, READ, io_u->buf, 1);
+            head = create_pio(io_u->file->file_name, io_u->file->fd, io_u->offset >> 12, READ,
+                              io_u->buf, 1);
             submit_pio(head);
             break;
         case DDIR_WRITE:
-            head = create_pio(io_u->file->file_name, io_u->offset >> 12, WRITE, io_u->buf, 1);
+            head = create_pio(io_u->file->file_name, io_u->file->fd, io_u->offset >> 12, WRITE,
+                              io_u->buf, 1);
             submit_pio(head);
             break;
         default:
             assert(false);
             break;
     }
-
     free_pio(head);
-    free(buffer);
     return 0;
 }
+
+static int myfio_setup(struct thread_data *td) { return 0; }
 
 static int myfio_getevents(struct thread_data *td, unsigned int min, unsigned int max,
                            const struct timespec *t) {
-    printf("myfio_getevent\n");
     return 0;
 }
 
-static struct io_u *myfio_event(struct thread_data *td, int event) {
-    printf("myfio_event\n");
-    return 0;
-}
-
-static int myfio_open(struct thread_data *td, struct fio_file *f) {
-    printf("init rc = %d\n", init_udm_cache());
-    return 0;
-}
-
-static int myfio_close(struct thread_data *td, struct fio_file *f) {
-    info_udm_cache();
-    printf("exit rc = %d\n", exit_udm_cache());
-    return 0;
-}
+static struct io_u *myfio_event(struct thread_data *td, int event) { return 0; }
 
 /* FIO imports this structure using dlsym */
-struct ioengine_ops ioengine = {
-    .name = "myfio",
-    .version = FIO_IOOPS_VERSION,
-    .setup = myfio_setup,
-    .init = myfio_init,
-    .queue = myfio_queue,
-    .getevents = myfio_getevents,
-    .event = myfio_event,
-    .open_file = myfio_open,
-    .close_file = myfio_close,
-};
+struct ioengine_ops ioengine = {.name = "myfio",
+                                .version = FIO_IOOPS_VERSION,
+                                .setup = myfio_setup,
+                                .init = myfio_init,
+                                .queue = myfio_queue,
+                                .getevents = myfio_getevents,
+                                .event = myfio_event,
+                                .open_file = generic_open_file,
+                                .close_file = generic_close_file,
+                                .cleanup = myfio_cleanup};
 
 static void fio_init spdk_fio_register(void) { register_ioengine(&ioengine); }
 
