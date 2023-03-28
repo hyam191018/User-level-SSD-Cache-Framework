@@ -10,10 +10,10 @@
 /*
  *  Author: Hyam
  *  Date: 2023/03/28
- *  Description: 測試mapping table
+ *  Description: 壓力測試 mapping table
  */
 
-/*     實驗記錄 r3 w3 optw4 跑100萬次
+/*     實驗記錄 r3 w3 optw4 各跑100萬次
  *
  * ---> Information of mapping table <---
  * / free  entrys = 0

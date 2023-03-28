@@ -14,6 +14,7 @@
             page大小(32KB)，且必須對齊在一個cache page以內 */
 struct pio {
     char* full_path_name;
+    int fd;               // for fio tesst
     unsigned page_index;  // file offset = page_index * page_size
     operate operation;    // READ, WRITE, DISCARD
     void* buffer;         // user memory space

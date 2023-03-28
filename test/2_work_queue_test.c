@@ -9,7 +9,7 @@
 /*
  *  Author: Hyam
  *  Date: 2023/03/28
- *  Description: 測試work_queue 壓力
+ *  Description: 壓力測試 work_queue
  */
 
 #define MAX_WORKS 10

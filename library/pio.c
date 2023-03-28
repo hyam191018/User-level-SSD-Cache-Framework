@@ -7,6 +7,7 @@ struct pio *create_pio(char *full_path_name, unsigned page_index, operate operat
         return NULL;
     }
     new_pio->full_path_name = full_path_name;
+    new_pio->fd = 0;
     new_pio->page_index = page_index;
     new_pio->operation = operation;
     new_pio->buffer = buffer;
@@ -37,6 +38,7 @@ void print_pio(struct pio *head) {
     while (current != NULL) {
         printf("------------------------------\n");
         printf("full path name = %s\n", current->full_path_name);
+        printf("file descriptor = %d\n", current->fd);
         printf("page index = %d\n", current->page_index);
         switch (current->operation) {
             case READ:
