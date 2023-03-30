@@ -9,7 +9,7 @@ bs=4k
 rw=randread
 rwmixread=70
 time_based=1
-runtime=10
+runtime=60
 norandommap=1
 filename=testfile
 
