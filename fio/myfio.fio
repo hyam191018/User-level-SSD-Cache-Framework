@@ -7,10 +7,8 @@ group_reporting=1
 
 bs=4k
 rw=randread
-rwmixread=70
 time_based=1
 runtime=60
-norandommap=1
 filename=testfile
 
 [test]
