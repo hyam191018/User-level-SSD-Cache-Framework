@@ -25,8 +25,7 @@ typedef enum { READ, WRITE, DISCARD } operate;
 #define SHM_CACHE_NAME "/udm_cache"
 
 /* spdk setting */
-#define BDEV_NAME "Nvme0n1"
-#define JSON_CONFIG "bdev.json"
+#define NVME_ADDR "0000:04:00.0"
 
 /* may increase hit ratio */
 #define unlikely(x) __builtin_expect(!!(x), 0)
