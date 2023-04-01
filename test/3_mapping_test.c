@@ -7,10 +7,28 @@
 #include "cache_type.h"
 #include "mapping.h"
 
-/*
+/**
  *  Author: Hyam
  *  Date: 2023/03/28
  *  Description: 壓力測試 mapping table
+ */
+
+/**
+ * 實驗記錄 r3 w3 optw4 各跑100萬次
+ * hit time = 4997965, miss time = 5002035, hit ratio = 50%
+ * free rc = 0
+ * exit rc = 0
+ * 282.48user
+ * 107.89system
+ * 2:51.35elapsed
+ * 227%CPU (0avgtext+0avgdata 6904maxresident)k
+ * 0inputs+0outputs (0major+613minor)pagefaults 0swaps
+ */
+
+/**
+ * 實驗記錄 r3 w3 optw4 各跑1000萬次
+ * hit time = 49956543, miss time = 50043457, hit ratio = 49.96%
+ * 25分鐘左右
  */
 
 #define do_printf false
@@ -22,11 +40,9 @@
 #define to_cache_page_index(page_index) \
     (page_index >> 3)  // page_index為4KB，cache_page_index為32KB
 
-// 可能會影響效能
 // 定義一個互斥鎖(讓mg&wb worker可以一直運作，直到users都結束)
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-// 當count==user數，mg&wb worker結束
-int count = 0;
+int count = 0;  // 當count==user數，mg&wb worker結束
 
 // 期望的 hit ratio = 裝置大小 / 檔案大小
 // 假設期望 hit ration 50%, 裝置有100G, 那檔案應該要有200G
@@ -173,34 +189,3 @@ int main(void) {
     pthread_join(wb_worker, NULL);
     info_mapping(&mp);
 }
-
-/*     實驗記錄 r3 w3 optw4 各跑100萬次
- *
- * ---> Information of mapping table <---
- * / free  entrys = 0
- * / clean entrys = 1024
- * / dirty entrys = 0
- * / promotion time = 1475686
- * / demotion  time = 1525890
- * / writeback time = 3601398
- * / hit time = 4997965, miss time = 5002035, hit ratio = 50%
- * free rc = 0
- * exit rc = 0
- * 282.48user
- * 107.89system
- * 2:51.35elapsed
- * 227%CPU (0avgtext+0avgdata 6904maxresident)k
- * 0inputs+0outputs (0major+613minor)pagefaults 0swaps
- */
-
-/*     實驗記錄 r3 w3 optw4 各跑1000萬次
- *
- * ---> Information of mapping table <---
- * / free  entrys = 0
- * / clean entrys = 15997
- * / dirty entrys = 16771
- * / promotion time = 1569604
- * / demotion  time = 1828340
- * / writeback time = 16546748
- * / hit time = 49956543, miss time = 50043457, hit ratio = 49.96%
- */

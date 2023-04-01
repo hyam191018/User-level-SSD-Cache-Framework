@@ -3,7 +3,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define FILE_SIZE 200 * 1024 * 1024  // 檔案大小为200MB
+/**
+ * 建立一個大小為200MB的檔案，檔名為testfile
+ */
+
+#define FILE_NAME "testfile"
+#define FILE_SIZE 200 * 1024 * 1024
 #define PAGE_SIZE 4096
 
 int main(int argc, char *argv[]) {
@@ -12,7 +17,7 @@ int main(int argc, char *argv[]) {
     ssize_t bytes_written;
     off_t offset;
 
-    fd = open("testfile", O_WRONLY | O_CREAT | O_DIRECT, 0644);
+    fd = open(FILE_NAME, O_WRONLY | O_CREAT | O_DIRECT, 0644);
     if (fd == -1) {
         perror("open");
         exit(EXIT_FAILURE);

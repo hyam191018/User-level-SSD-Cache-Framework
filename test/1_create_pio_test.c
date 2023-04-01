@@ -3,7 +3,7 @@
 
 #include "pio.h"
 
-/*
+/**
  *  Author: Hyam
  *  Date: 2023/03/28
  *  Description: 測試 pio
@@ -14,7 +14,7 @@ int main(void) {
     void *buffer2 = malloc(4096);
     void *buffer3 = malloc(4096);
 
-    // 創建PIO
+    // 建立PIO
     struct pio *pio = create_pio("test", 0, 0, READ, buffer, 3);
 
     append_pio(pio, buffer2);
@@ -23,7 +23,7 @@ int main(void) {
     // 輸出PIO的內容
     print_pio(pio);
 
-    // 釋放PIO對象及內存空間
+    // 釋放PIO
     free_pio(pio);
     free(buffer);
     free(buffer2);

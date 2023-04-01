@@ -5,11 +5,38 @@
 #include "cache_api.h"
 #include "stdinc.h"
 
+/**
+ *  Author: Hyam
+ *  Date: 2023/03/28
+ *  Description: 壓力測試 users submit pio (read only)
+ */
+
 #define USERS 10       // 使用者數量
 #define ROUND 1000000  // 使用者submit次數
 #define EXCEPT 50      // 期望的 hit ratio
+#define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =
     (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT * 4ull);
+
+// 建立檔案
+static void build_file(void) {
+    unsigned long long file_size = MAX_PAGE_INDEX * PAGE_SIZE;
+
+    FILE* fp = fopen(FILE_NAME, "wb");
+    if (fp == NULL) {
+        printf("Error opening file\n");
+        return;
+    }
+
+    char* buffer = (char*)malloc(PAGE_SIZE);
+
+    for (unsigned long long i = 0; i < file_size; i += PAGE_SIZE) {
+        fwrite(buffer, 1, PAGE_SIZE, fp);
+    }
+
+    fclose(fp);
+    free(buffer);
+}
 
 // 隨機4K讀寫
 static void send_pio(void) {
@@ -35,8 +62,8 @@ static void user(void) {
 
 int main(int argc, char* argv[]) {
     // 開啟udm-cache
-    force_exit_udm_cache();
     printf("%d init rc = %d\n", getpid(), init_udm_cache());
+    build_file();
 
     for (int i = 0; i < USERS; i++) {
         pid_t pid_user = fork();
@@ -53,6 +80,7 @@ int main(int argc, char* argv[]) {
         wait(NULL);
     }
 
+    remove(FILE_NAME);
     // 關閉udm-cache
     info_udm_cache();
     printf("%d exit rc = %d\n", getpid(), exit_udm_cache());

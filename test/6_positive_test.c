@@ -5,6 +5,12 @@
 #include "cache_api.h"
 #include "stdinc.h"
 
+/**
+ *  Author: Hyam
+ *  Date: 2023/03/28
+ *  Description: 正向測試 建立檔案>讀取檔案>寫入檔案>讀取檔案
+ */
+
 #define NUM_PAGE 24
 
 // 建立一個從A開始，每個字母4KB的檔案，大小為24*4KB
