@@ -1,0 +1,15 @@
+[global]
+ioengine=libaio
+thread=1
+direct=1
+rw=randread
+time_based=1
+runtime=10
+size=1G
+iodepth=16
+
+[filename0]
+filename=testfile
+
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/test/libaio.fio
+
