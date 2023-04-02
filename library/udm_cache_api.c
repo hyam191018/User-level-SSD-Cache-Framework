@@ -1,6 +1,7 @@
 #include "cache_api.h"
 #include "mapping.h"
 #include "shm.h"
+#include "spdk.h"
 #include "stdinc.h"
 #include "target.h"
 
@@ -98,14 +99,16 @@ int init_udm_cache(void) {
         printf("Error: init_udm_cache - admin is running\n");
         return 1;
     }
-
+    if (init_spdk()) {
+        return 1;
+    }
     /* build device: from spdk  TODO */
-    strcpy(shared_cache->cache_dev.bdev_name, BDEV_NAME);
-    shared_cache->cache_dev.block_size = 512;
-    shared_cache->cache_dev.device_size = CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE;
+    get_device_info(&shared_cache->cache_dev.block_size, &shared_cache->cache_dev.device_size);
     shared_cache->cache_dev.cache_block_num = CACHE_BLOCK_NUMBER;
-    if (shared_cache->cache_dev.block_size * shared_cache->cache_dev.device_size <
-        CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE) {
+    shared_cache->cache_dev.block_per_cblock =
+        CACHE_BLOCK_SIZE / shared_cache->cache_dev.block_size;
+    shared_cache->cache_dev.block_per_cblock = PAGE_SIZE / shared_cache->cache_dev.block_size;
+    if (shared_cache->cache_dev.device_size < CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE) {
         printf("Error: Cache device size is not enough for setting cblock number\n");
         return 1;
     }
@@ -137,7 +140,6 @@ int link_udm_cache(void) {
     spinlock_unlock(&shared_cache->cache_state.lock);
     return 0;
 }
-
 int free_udm_cache(void) {
     if (!shared_cache) {
         printf("Error: free_udm_cache - shared cache uninitialized\n");
@@ -180,6 +182,7 @@ int exit_udm_cache(void) {
     }
     shutdown_wb_worker();
     shutdown_mg_worker();
+    exit_spdk();
     if (unmap_shm(shared_cache, sizeof(struct cache))) {
         return 1;
     }
@@ -206,9 +209,8 @@ void info_udm_cache(void) {
         return;
     }
     printf("---> Information of cache device <---\n");
-    printf("/ bdev name = %s\n", shared_cache->cache_dev.bdev_name);
-    printf("/ block_size = %u\n", shared_cache->cache_dev.block_size);
-    printf("/ device_size = %lu\n", shared_cache->cache_dev.device_size);
+    printf("/ block_size = %uBytes\n", shared_cache->cache_dev.block_size);
+    printf("/ device_size = %luGB\n", shared_cache->cache_dev.device_size / 1000000000);
     printf("/ cache_block_num = %u\n", shared_cache->cache_dev.cache_block_num);
     info_mapping(&shared_cache->cache_map);
 }

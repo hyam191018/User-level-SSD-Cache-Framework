@@ -14,17 +14,18 @@ static void pio_to_iovec(struct pio *pio, struct iovec *iov, int iov_cnt) {
 }
 
 static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    // printf("write to cache\n");
+    printf("write to cache\n");
     set_dirty_after_write(&cache->cache_map, &cblock, true);
     return 0;
 }
 
 static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    // printf("read from cache\n");
+    printf("read from cache\n");
     return 0;
 }
 
 static int write_origin(struct cache *cache, struct pio *pio) {
+    printf("write origin\n");
     /* pio to iovec */
     int iov_cnt = pio->pio_cnt;
     struct iovec *iov = (struct iovec *)malloc(sizeof(struct iovec) * iov_cnt);
@@ -50,6 +51,7 @@ static int write_origin(struct cache *cache, struct pio *pio) {
 }
 
 static int read_origin(struct cache *cache, struct pio *pio) {
+    printf("read origin\n");
     /* pio to iovec */
     int iov_cnt = pio->pio_cnt;
     struct iovec *iov = (struct iovec *)malloc(sizeof(struct iovec) * iov_cnt);
