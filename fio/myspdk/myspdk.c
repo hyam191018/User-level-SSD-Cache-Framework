@@ -20,21 +20,17 @@
 #include "spdk/util.h"
 #include "spdk_internal/event.h"
 
-void *dma_buf;
-
 static int myspdk_init(struct thread_data *td) {
     init_spdk();
-    dma_buf = alloc_dma_buffer(4096);
     return 0;
 }
 
-static void myspdk_cleanup(struct thread_data *td) {
-    free_dma_buffer(dma_buf);
-    exit_spdk();
-}
+static void myspdk_cleanup(struct thread_data *td) { exit_spdk(); }
 
 static enum fio_q_status myspdk_queue(struct thread_data *td, struct io_u *io_u) {
-    // memcpy(dma_buf, io_u->xfer_buf, 4096);
+    void *dma_buf;
+    dma_buf = alloc_dma_buffer(4096);
+    memcpy(dma_buf, io_u->xfer_buf, 4096);
     switch (io_u->ddir) {
         case DDIR_READ:
             read_spdk(dma_buf, 0, 8);
@@ -46,6 +42,7 @@ static enum fio_q_status myspdk_queue(struct thread_data *td, struct io_u *io_u)
             assert(false);
             break;
     }
+    free_dma_buffer(dma_buf);
     return FIO_Q_COMPLETED;
 }
 

@@ -22,4 +22,4 @@ SPDK_LIB_LIST = $(ALL_MODULES_LIST) event event_bdev
 include $(SPDK_ROOT_DIR)/mk/spdk.fio.mk
 
 
-# sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio_spdk/myspdk.fio
+# sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myspdk/myspdk.fio
