@@ -121,7 +121,7 @@ int init_udm_cache(void) {
     shared_cache->cache_state.count = 0;
     return 0;
 }
-
+/*
 int link_udm_cache(void) {
     shared_cache = link_shm(SHM_CACHE_NAME, sizeof(struct cache));
     if (!shared_cache) {
@@ -158,7 +158,7 @@ int free_udm_cache(void) {
     shared_cache = NULL;
     return 0;
 }
-
+*/
 int exit_udm_cache(void) {
     if (!shared_cache) {
         printf("Error: exit_udm_cache - shared cache uninitialized\n");
