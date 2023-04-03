@@ -18,9 +18,9 @@ static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
     unsigned target_block = (cblock << cache->cache_map.block_per_cblock_shift) +
                             ((pio->page_index % 8) << cache->cache_dev.block_per_page_shift);
     int rc;
-    for (unsigned i = 0; i < pio->pio_cnt; i++) {
-        rc = write_spdk(pio->buffer, target_block + (i << cache->cache_dev.block_per_page_shift),
-                        1 << cache->cache_dev.block_per_page_shift);
+    while (pio) {
+        rc = write_spdk(pio->buffer, target_block, 1 << cache->cache_dev.block_per_page_shift);
+        target_block += 1 << cache->cache_dev.block_per_page_shift;
         if (rc) {
             return rc;
         }
@@ -34,9 +34,9 @@ static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
     unsigned target_block = (cblock << cache->cache_map.block_per_cblock_shift) +
                             ((pio->page_index % 8) << cache->cache_dev.block_per_page_shift);
     int rc;
-    for (unsigned i = 0; i < pio->pio_cnt; i++) {
-        rc = read_spdk(pio->buffer, target_block + (i << cache->cache_dev.block_per_page_shift),
-                       1 << cache->cache_dev.block_per_page_shift);
+    while (pio) {
+        rc = read_spdk(pio->buffer, target_block, 1 << cache->cache_dev.block_per_page_shift);
+        target_block += 1 << cache->cache_dev.block_per_page_shift;
         if (rc) {
             return rc;
         }
@@ -47,7 +47,6 @@ static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
 }
 
 static int write_origin(struct cache *cache, struct pio *pio) {
-    printf("write origin\n");
     /* pio to iovec */
     int iov_cnt = pio->pio_cnt;
     struct iovec *iov = (struct iovec *)malloc(sizeof(struct iovec) * iov_cnt);
@@ -73,7 +72,6 @@ static int write_origin(struct cache *cache, struct pio *pio) {
 }
 
 static int read_origin(struct cache *cache, struct pio *pio) {
-    printf("read origin\n");
     /* pio to iovec */
     int iov_cnt = pio->pio_cnt;
     struct iovec *iov = (struct iovec *)malloc(sizeof(struct iovec) * iov_cnt);

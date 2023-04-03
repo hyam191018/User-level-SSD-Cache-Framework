@@ -3,6 +3,7 @@
 #include <sys/wait.h>
 
 #include "cache_api.h"
+#include "spdk.h"
 #include "stdinc.h"
 
 /**
@@ -11,8 +12,15 @@
  *  Description: 壓力測試 admin submit pio (read only)
  */
 
-#define ROUND 1000000  // submit次數
-#define EXCEPT 100     // 期望的 hit ratio
+/**
+ * 實驗記錄 跑1000萬次
+ * hit time = 4989637, miss time = 5010363, hit ratio = 49.90%
+ * 292.30user 49.55system 23:11.36elapsed 24%CPU (0avgtext+0avgdata 12008maxresident)k
+ * 17998592inputs+20038176outputs (1major+2320minor)pagefaults 0swaps
+ */
+
+#define ROUND 10000000  // submit次數
+#define EXCEPT 50       // 期望的 hit ratio
 #define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =
     (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT * 4ull);
@@ -21,12 +29,12 @@ const unsigned long long MAX_PAGE_INDEX =
 static void send_pio(void) {
     unsigned page_index = rand() % MAX_PAGE_INDEX;
     operate operation = rand() % 2 ? READ : WRITE;
-    char* buffer = malloc(PAGE_SIZE);
+    void* buffer = alloc_dma_buffer(PAGE_SIZE);
     unsigned pio_cnt = 1;
     struct pio* head = create_pio(FILE_NAME, 0, page_index, operation, buffer, pio_cnt);
     submit_pio(head);
     free_pio(head);
-    free(buffer);
+    free_dma_buffer(buffer);
 }
 
 int main(int argc, char* argv[]) {

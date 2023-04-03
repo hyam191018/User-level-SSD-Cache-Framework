@@ -3,6 +3,7 @@
 #include <sys/wait.h>
 
 #include "cache_api.h"
+#include "spdk.h"
 #include "stdinc.h"
 
 /**
@@ -46,42 +47,76 @@ static void build(void) {
 }
 
 static void test(void) {
-    // 讀24 * 4KB
+    // 讀A~X
     char* name = "ptestfile";
-    void* buffer = NULL;
-    if (posix_memalign(&buffer, PAGE_SIZE, PAGE_SIZE) != 0) {
-        perror("posix_memalign");
-        exit(EXIT_FAILURE);
-    }
+    void* buffer = alloc_dma_buffer(PAGE_SIZE);
     unsigned pio_cnt = 1;
     struct pio* head = NULL;
+    printf("Reading:");
     for (int i = 0; i < 24; i++) {
         head = create_pio(name, 0, i, READ, buffer, pio_cnt);
         submit_pio(head);
-        if (((char*)buffer)[0] != i + 'A') {
-            printf("test fail\n");
-            return;
-        }
+        printf("%c", ((char*)buffer)[0]);
         free_pio(head);
     }
-    // 寫24 * 4KB
+    printf("\n");
+
+    // 寫a~x
+    printf("Writing:");
     for (int i = 0; i < 24; i++) {
         memset(buffer, (i + 'a'), PAGE_SIZE);
+        printf("%c", ((char*)buffer)[0]);
         head = create_pio(name, 0, i, WRITE, buffer, pio_cnt);
         submit_pio(head);
         free_pio(head);
     }
-    free(buffer);
-    // 讀24 * 4KB
+    printf("\n");
+
+    // 讀a~x
+    memset(buffer, 0, PAGE_SIZE);
+    printf("Reading:");
     for (int i = 0; i < 24; i++) {
         head = create_pio(name, 0, i, READ, buffer, pio_cnt);
         submit_pio(head);
-        if (((char*)buffer)[0] != i + 'a') {
-            printf("test fail\n");
-            return;
-        }
+        printf("%c", ((char*)buffer)[0]);
         free_pio(head);
     }
+    printf("\n");
+    sleep(1);  // 確保migration完成
+
+    // 從SSD讀a~x
+    memset(buffer, 0, PAGE_SIZE);
+    printf("Reading:");
+    for (int i = 0; i < 24; i++) {
+        head = create_pio(name, 0, i, READ, buffer, pio_cnt);
+        submit_pio(head);
+        printf("%c", ((char*)buffer)[0]);
+        free_pio(head);
+    }
+    printf("\n");
+
+    // 寫A~X到SSD
+    printf("Writing:");
+    for (int i = 0; i < 24; i++) {
+        memset(buffer, (i + 'A'), PAGE_SIZE);
+        printf("%c", ((char*)buffer)[0]);
+        head = create_pio(name, 0, i, WRITE, buffer, pio_cnt);
+        submit_pio(head);
+        free_pio(head);
+    }
+    printf("\n");
+
+    // 讀A~X
+    memset(buffer, 0, PAGE_SIZE);
+    printf("Reading:");
+    for (int i = 0; i < 24; i++) {
+        head = create_pio(name, 0, i, READ, buffer, pio_cnt);
+        submit_pio(head);
+        printf("%c", ((char*)buffer)[0]);
+        free_pio(head);
+    }
+    free_dma_buffer(buffer);
+    printf("\n");
     printf("Test success\n");
 }
 

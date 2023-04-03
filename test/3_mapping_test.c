@@ -6,10 +6,11 @@
 
 #include "cache_type.h"
 #include "mapping.h"
+#include "spdk.h"
 
 /**
  *  Author: Hyam
- *  Date: 2023/03/28
+ *  Date: 2023/04/03
  *  Description: 壓力測試 mapping table
  */
 
@@ -120,8 +121,9 @@ static void *optw_func(void *arg) {
 
 // admin會開兩個thread 執行 migration與writeback
 static void *mg_worker_func(void *arg) {
+    void *dma_buf = alloc_dma_buffer(CACHE_BLOCK_SIZE);
     while (true) {
-        do_migration_work(&mp);
+        do_migration_work(&mp, dma_buf);
         pthread_mutex_lock(&lock);
         // 檢查別人完成了沒
         if (count == (read_users + optw_users + write_users)) {
@@ -130,13 +132,14 @@ static void *mg_worker_func(void *arg) {
         }
         pthread_mutex_unlock(&lock);
     }
-
+    free_dma_buffer(dma_buf);
     return NULL;
 }
 
 static void *wb_worker_func(void *arg) {
+    void *dma_buf = alloc_dma_buffer(CACHE_BLOCK_SIZE);
     while (true) {
-        do_writeback_work(&mp);
+        do_writeback_work(&mp, dma_buf);
         pthread_mutex_lock(&lock);
         // 檢查別人完成了沒
         if (count == (read_users + optw_users + write_users)) {
@@ -145,7 +148,7 @@ static void *wb_worker_func(void *arg) {
         }
         pthread_mutex_unlock(&lock);
     };
-
+    free_dma_buffer(dma_buf);
     return NULL;
 }
 
