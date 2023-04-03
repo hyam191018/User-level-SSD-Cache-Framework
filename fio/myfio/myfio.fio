@@ -14,4 +14,4 @@ filename=testfile
 [test]
 size=2G
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myudm-cache/myfio.fio
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myfio/myfio.fio
