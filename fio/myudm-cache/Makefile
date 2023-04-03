@@ -13,6 +13,7 @@ FIO_PLUGIN := myfio
 C_SRCS := \
 myfio.c \
 ../../library/pio.c \
+../../library/spdk.c \
 ../../library/atomic.c \
 ../../library/shm.c \
 ../../library/work_queue.c \

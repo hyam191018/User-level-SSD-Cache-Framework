@@ -7,6 +7,7 @@
 #include "config-host.h"
 #include "fio.h"
 #include "optgroup.h"
+#include "spdk.h"
 #include "spdk/accel.h"
 #include "spdk/bdev.h"
 #include "spdk/bdev_zone.h"
@@ -31,6 +32,14 @@ static void myfio_cleanup(struct thread_data *td) {
     info_udm_cache();
     printf("exit rc = %d\n", exit_udm_cache());
 }
+
+// 改成自己配置的malloc
+static int myfio_iomem_alloc(struct thread_data *td, size_t total_mem) {
+    td->orig_buffer = alloc_dma_buffer(PAGE_SIZE);
+    return td->orig_buffer == NULL;
+}
+
+static void myfio_iomem_free(struct thread_data *td) { spdk_dma_free(td->orig_buffer); }
 
 // 開始做讀寫 模擬sync.c
 static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) {
@@ -73,6 +82,8 @@ struct ioengine_ops ioengine = {.name = "myfio",
                                 .event = myfio_event,
                                 .open_file = generic_open_file,
                                 .close_file = generic_close_file,
+                                .iomem_alloc = myfio_iomem_alloc,
+                                .iomem_free = myfio_iomem_free,
                                 .cleanup = myfio_cleanup};
 
 static void fio_init spdk_fio_register(void) { register_ioengine(&ioengine); }

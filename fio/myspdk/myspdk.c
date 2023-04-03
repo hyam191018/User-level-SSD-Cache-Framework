@@ -27,22 +27,25 @@ static int myspdk_init(struct thread_data *td) {
 
 static void myspdk_cleanup(struct thread_data *td) { exit_spdk(); }
 
+static int myspdk_iomem_alloc(struct thread_data *td, size_t total_mem) {
+    td->orig_buffer = alloc_dma_buffer(PAGE_SIZE);
+    return td->orig_buffer == NULL;
+}
+
+static void myspdk_iomem_free(struct thread_data *td) { spdk_dma_free(td->orig_buffer); }
+
 static enum fio_q_status myspdk_queue(struct thread_data *td, struct io_u *io_u) {
-    void *dma_buf;
-    dma_buf = alloc_dma_buffer(4096);
-    memcpy(dma_buf, io_u->xfer_buf, 4096);
     switch (io_u->ddir) {
         case DDIR_READ:
-            read_spdk(dma_buf, 0, 8);
+            read_spdk(io_u->xfer_buf, 0, 8);
             break;
         case DDIR_WRITE:
-            write_spdk(dma_buf, 0, 8);
+            write_spdk(io_u->xfer_buf, 0, 8);
             break;
         default:
             assert(false);
             break;
     }
-    free_dma_buffer(dma_buf);
     return FIO_Q_COMPLETED;
 }
 
@@ -65,6 +68,8 @@ struct ioengine_ops ioengine = {.name = "myspdk",
                                 .event = myspdk_event,
                                 .open_file = generic_open_file,
                                 .close_file = generic_close_file,
+                                .iomem_alloc = myspdk_iomem_alloc,
+                                .iomem_free = myspdk_iomem_free,
                                 .cleanup = myspdk_cleanup};
 
 static void fio_init spdk_fio_register(void) { register_ioengine(&ioengine); }
