@@ -12,4 +12,6 @@ runtime=60
 filename=testfile
 
 [test]
-size=1G
+size=2G
+
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myudm-cache/myfio.fio

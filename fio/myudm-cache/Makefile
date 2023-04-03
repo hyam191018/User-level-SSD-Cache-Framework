@@ -27,5 +27,3 @@ CFLAGS += -g -O2
 SPDK_LIB_LIST = $(ALL_MODULES_LIST) event event_bdev
 
 include $(SPDK_ROOT_DIR)/mk/spdk.fio.mk
-
-#sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myudm-cache/myfio.fio
