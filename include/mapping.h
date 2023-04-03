@@ -18,14 +18,14 @@ void info_mapping(mapping *mapping);
  * Return:  true, if done a work
  *          false, if donothing
  */
-bool do_migration_work(mapping *mapping);
+bool do_migration_work(mapping *mapping, void *dma_buf);
 
 /*
  * Description: try to writeback
  * Return:  true, if done a work
  *          false, if donothing
  */
-bool do_writeback_work(mapping *mapping);
+bool do_writeback_work(mapping *mapping, void *dma_buf);
 /*
  * Description: Search hash table
  * Return:  true, if hit

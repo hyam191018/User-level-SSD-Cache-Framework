@@ -1,6 +1,7 @@
 #include "config.h"
 #include "mapping.h"
 #include "shm.h"
+#include "spdk.h"
 #include "stdinc.h"
 #include "work_queue.h"
 
@@ -316,12 +317,19 @@ static void h_remove(struct hash_table *ht, struct entry *e) {
 
 /* --------------------------------------------------- */
 
+static inline int LOG2(unsigned int n) { return (n > 1) ? (1 + LOG2(n >> 1)) : 0; }
+
 int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num) {
+    if (!block_size || !cblock_num) {
+        return 1;
+    }
     mapping->block_size = block_size;
-    mapping->cblock_num = cblock_num;
+    mapping->cache_block_num = cblock_num;
+    mapping->block_per_cblock_shift = LOG2(CACHE_BLOCK_SIZE / mapping->block_size);
+    mapping->block_per_page_shift = LOG2(PAGE_SIZE / mapping->block_size);
 
     alloc_es(&mapping->es);
-    init_allocator(&mapping->ea, &mapping->es, 0, mapping->cblock_num);
+    init_allocator(&mapping->ea, &mapping->es, 0, mapping->cache_block_num);
     l_init(&mapping->clean);
     l_init(&mapping->dirty);
     alloc_hash_table(&mapping->table, &mapping->es);
@@ -390,7 +398,7 @@ static void promotion_complete(mapping *mapping, unsigned *cblock, bool success)
 static bool demotion_clean_to_free(mapping *mapping, unsigned *cblock) {
     spinlock_lock(&mapping->mapping_lock);
 
-    if (mapping->clean.nr_elts <= (mapping->cblock_num >> 1)) {
+    if (mapping->clean.nr_elts <= (mapping->cache_block_num >> 1)) {
         spinlock_unlock(&mapping->mapping_lock);
         return false;
     }
@@ -462,23 +470,84 @@ static void writeback_complete(mapping *mapping, unsigned *cblock, bool success)
 
 /* --------------------------------------------------- */
 
-bool do_migration_work(mapping *mapping) {
+static bool mg_start(mapping *mapping, void *dma_buf, char *full_path_name,
+                     unsigned cache_page_index, unsigned cblock, mg_type type) {
+    int fd;
+    switch (type) {
+        case PROMOTION:
+            // read from HDD
+            fd = open(full_path_name, O_RDONLY | O_DIRECT, 0644);
+            if (fd < 0) {
+                printf("Error: open file fail\n");
+                return false;
+            }
+            if (pread(fd, dma_buf, CACHE_BLOCK_SIZE, cache_page_index << CBLOCK_SHIFT) < 0) {
+                printf("Error: read HDD fail\n");
+                return false;
+            }
+            close(fd);
+            // write to SSD
+            if (write_spdk(dma_buf, cblock << mapping->block_per_cblock_shift,
+                           1 << mapping->block_per_cblock_shift)) {
+                printf("Error: write SSD fail\n");
+                return false;
+            }
+            break;
+        case DEMOTION:
+            // trim SSD
+            if (!trim_spdk(cache_page_index << mapping->block_per_cblock_shift,
+                           1 << mapping->block_per_cblock_shift)) {
+                printf("Error: trim SSD fail\n");
+            }
+            break;
+        case WRITEBACK:
+            // read from SSD
+            if (read_spdk(dma_buf, cblock << mapping->block_per_cblock_shift,
+                          1 << mapping->block_per_cblock_shift)) {
+                printf("Error: read SSD fail\n");
+                return false;
+            }
+            // write to HDD
+            fd = open(full_path_name, O_WRONLY | O_DIRECT, 0644);
+            if (fd < 0) {
+                printf("Error: open file fail\n");
+                return false;
+            }
+            if (pwrite(fd, dma_buf, CACHE_BLOCK_SIZE, cache_page_index << CBLOCK_SHIFT) < 0) {
+                printf("Error: write HDD fail\n");
+                return false;
+            }
+            close(fd);
+            break;
+
+        default:
+            printf("Error: unknow type\n");
+            return false;
+            break;
+    }
+    return true;
+}
+
+bool do_migration_work(mapping *mapping, void *dma_buf) {
     char full_path_name[MAX_PATH_SIZE];
     unsigned cache_page_index;
     unsigned cblock;
-    bool success;
+    bool success = true;
     /* get a work */
     if (peak_work(&mapping->wq, full_path_name, &cache_page_index)) {
         if (promotion_free_to_clean(mapping, full_path_name, cache_page_index, &cblock)) {
-            // printf("( HDD to SSD )\n");
-            success = true;  // HDD to SSD
+            // success =
+            //     mg_start(mapping, dma_buf, full_path_name, cache_page_index, cblock, PROMOTION);
+            //    Complete promotion
             promotion_complete(mapping, &cblock, success);
         } else if (demotion_clean_to_free(mapping, &cblock)) {
-            success = true;
+            // success = mg_start(mapping, NULL, NULL, 0, cblock, DEMOTION);
+            //   Complete demotion
             demotion_complete(mapping, &cblock, success);
         } else if (writeback_dirty_to_clean(mapping, &cblock)) {
-            // printf("( SSD to HDD )\n");
-            success = true;  // SSD to HDD
+            // success =
+            //     mg_start(mapping, dma_buf, full_path_name, cache_page_index, cblock, WRITEBACK);
+            //   Complete writeback
             writeback_complete(mapping, &cblock, success);
         }
         remove_work(&mapping->wq);
@@ -487,12 +556,11 @@ bool do_migration_work(mapping *mapping) {
     return false;
 }
 
-bool do_writeback_work(mapping *mapping) {
+bool do_writeback_work(mapping *mapping, void *dma_buf) {
     unsigned cblock;
-    unsigned success;
+    bool success = true;
     if (writeback_dirty_to_clean(mapping, &cblock)) {
         // printf("( SSD to HDD )\n");
-        success = true;
         writeback_complete(mapping, &cblock, success);
         return true;
     }

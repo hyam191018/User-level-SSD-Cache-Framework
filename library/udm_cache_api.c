@@ -1,4 +1,5 @@
 #include "cache_api.h"
+#include "config.h"
 #include "mapping.h"
 #include "shm.h"
 #include "spdk.h"
@@ -9,15 +10,17 @@ static struct cache *shared_cache = NULL;
 
 static void *migration(void *arg) {
     struct timespec ts = {0, MIGRATION_DELAY};
+    void *dma_buf = alloc_dma_buffer(CACHE_BLOCK_SIZE);
     while (1) {
-        if (!do_migration_work(&shared_cache->cache_map)) {
+        if (!do_migration_work(&shared_cache->cache_map, dma_buf)) {
             // 沒事做的話，檢查是否有取消請求
             if (is_empty(&shared_cache->cache_map.wq)) {
                 pthread_testcancel();
+                nanosleep(&ts, NULL);
             }
-            nanosleep(&ts, NULL);
         }
     }
+    free_dma_buffer(dma_buf);
     return NULL;
 }
 
@@ -50,13 +53,15 @@ static int shutdown_mg_worker(void) {
 
 static void *writeback(void *arg) {
     struct timespec ts = {0, WRITEBACK_DELAY};
+    void *dma_buf = alloc_dma_buffer(CACHE_BLOCK_SIZE);
     while (true) {
-        if (!do_writeback_work(&shared_cache->cache_map)) {
+        if (!do_writeback_work(&shared_cache->cache_map, dma_buf)) {
             // 沒事做的話，檢查是否有取消請求
             pthread_testcancel();
-            nanosleep(&ts, NULL);
         }
+        nanosleep(&ts, NULL);
     }
+    free_dma_buffer(dma_buf);
     return NULL;
 }
 
@@ -90,6 +95,8 @@ static int shutdown_wb_worker(void) {
 
 /* --------------------------------------------------- */
 
+static inline int LOG2(unsigned int n) { return (n > 1) ? (1 + LOG2(n >> 1)) : 0; }
+
 int init_udm_cache(void) {
     shared_cache = alloc_shm(SHM_CACHE_NAME, sizeof(struct cache));
     if (!shared_cache) {
@@ -102,12 +109,13 @@ int init_udm_cache(void) {
     if (init_spdk()) {
         return 1;
     }
-    /* build device: from spdk  TODO */
+    /* build device */
     get_device_info(&shared_cache->cache_dev.block_size, &shared_cache->cache_dev.device_size);
     shared_cache->cache_dev.cache_block_num = CACHE_BLOCK_NUMBER;
-    shared_cache->cache_dev.block_per_cblock =
-        CACHE_BLOCK_SIZE / shared_cache->cache_dev.block_size;
-    shared_cache->cache_dev.block_per_cblock = PAGE_SIZE / shared_cache->cache_dev.block_size;
+    shared_cache->cache_dev.block_per_cblock_shift =
+        LOG2(CACHE_BLOCK_SIZE / shared_cache->cache_dev.block_size);
+    shared_cache->cache_dev.block_per_page_shift =
+        LOG2(PAGE_SIZE / shared_cache->cache_dev.block_size);
     if (shared_cache->cache_dev.device_size < CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE) {
         printf("Error: Cache device size is not enough for setting cblock number\n");
         return 1;
@@ -194,7 +202,7 @@ int exit_udm_cache(void) {
 }
 
 void force_exit_udm_cache(void) {
-    shutdown_wb_worker();
+    // shutdown_wb_worker();
     shutdown_mg_worker();
     unlink_shm(SHM_CACHE_NAME);
 }
