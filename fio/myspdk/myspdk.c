@@ -37,10 +37,10 @@ static void myspdk_iomem_free(struct thread_data *td) { spdk_dma_free(td->orig_b
 static enum fio_q_status myspdk_queue(struct thread_data *td, struct io_u *io_u) {
     switch (io_u->ddir) {
         case DDIR_READ:
-            read_spdk(io_u->xfer_buf, 0, 8);
+            read_spdk(io_u->xfer_buf, io_u->offset >> 9, 8);
             break;
         case DDIR_WRITE:
-            write_spdk(io_u->xfer_buf, 0, 8);
+            write_spdk(io_u->xfer_buf, io_u->offset >> 9, 8);
             break;
         default:
             assert(false);
