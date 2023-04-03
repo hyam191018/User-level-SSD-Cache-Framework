@@ -1,4 +1,5 @@
 #include "mapping.h"
+#include "spdk.h"
 #include "stdinc.h"
 #include "target.h"
 
@@ -14,13 +15,34 @@ static void pio_to_iovec(struct pio *pio, struct iovec *iov, int iov_cnt) {
 }
 
 static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    printf("write to cache\n");
-    set_dirty_after_write(&cache->cache_map, &cblock, true);
+    unsigned target_block = (cblock << cache->cache_map.block_per_cblock_shift) +
+                            ((pio->page_index % 8) << cache->cache_dev.block_per_page_shift);
+    int rc;
+    for (unsigned i = 0; i < pio->pio_cnt; i++) {
+        rc = write_spdk(pio->buffer, target_block + (i << cache->cache_dev.block_per_page_shift),
+                        1 << cache->cache_dev.block_per_page_shift);
+        if (rc) {
+            return rc;
+        }
+        pio = pio->next;
+    }
+
     return 0;
 }
 
 static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    printf("read from cache\n");
+    unsigned target_block = (cblock << cache->cache_map.block_per_cblock_shift) +
+                            ((pio->page_index % 8) << cache->cache_dev.block_per_page_shift);
+    int rc;
+    for (unsigned i = 0; i < pio->pio_cnt; i++) {
+        rc = read_spdk(pio->buffer, target_block + (i << cache->cache_dev.block_per_page_shift),
+                       1 << cache->cache_dev.block_per_page_shift);
+        if (rc) {
+            return rc;
+        }
+        pio = pio->next;
+    }
+
     return 0;
 }
 
@@ -99,7 +121,7 @@ static int map_to_origin(struct cache *cache, struct pio *pio) {
 static int check_pio(struct pio *pio) { return (8 - (pio->page_index & 7)) >= pio->pio_cnt; }
 
 static int overwritable(struct pio *pio) {
-    /* The probability of overwritable is relatively low for 4KB random read/write */
+    // The probability of overwritable is relatively low for 4KB random read/write
     return pio->pio_cnt == 8 && (pio->page_index & 0b111) == 0;
 }
 
