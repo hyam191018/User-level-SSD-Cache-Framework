@@ -15,8 +15,9 @@ static void pio_to_iovec(struct pio *pio, struct iovec *iov, int iov_cnt) {
 }
 
 static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    unsigned target_block = (cblock << cache->cache_map.block_per_cblock_shift) +
-                            ((pio->page_index % 8) << cache->cache_dev.block_per_page_shift);
+    unsigned target_block =
+        (cblock << cache->cache_map.block_per_cblock_shift) +
+        ((pio->page_index & MOD_PAGE_PER_CBLOCK_SHIFT) << cache->cache_dev.block_per_page_shift);
     int rc;
     while (pio) {
         rc = write_spdk(pio->buffer, target_block, 1 << cache->cache_dev.block_per_page_shift);
@@ -27,12 +28,14 @@ static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
         pio = pio->next;
     }
 
+    set_dirty_after_write(&cache->cache_map, &cblock, true);
     return 0;
 }
 
 static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
-    unsigned target_block = (cblock << cache->cache_map.block_per_cblock_shift) +
-                            ((pio->page_index % 8) << cache->cache_dev.block_per_page_shift);
+    unsigned target_block =
+        (cblock << cache->cache_map.block_per_cblock_shift) +
+        ((pio->page_index & MOD_PAGE_PER_CBLOCK_SHIFT) << cache->cache_dev.block_per_page_shift);
     int rc;
     while (pio) {
         rc = read_spdk(pio->buffer, target_block, 1 << cache->cache_dev.block_per_page_shift);

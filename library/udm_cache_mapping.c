@@ -495,10 +495,8 @@ static bool mg_start(mapping *mapping, void *dma_buf, char *full_path_name,
             break;
         case DEMOTION:
             // trim SSD
-            if (!trim_spdk(cache_page_index << mapping->block_per_cblock_shift,
-                           1 << mapping->block_per_cblock_shift)) {
-                return false;
-            }
+            trim_spdk(cache_page_index << mapping->block_per_cblock_shift,
+                      1 << mapping->block_per_cblock_shift);
             break;
         case WRITEBACK:
             // read from SSD

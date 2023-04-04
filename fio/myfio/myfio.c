@@ -63,7 +63,10 @@ static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) 
     return 0;
 }
 
-static int myfio_setup(struct thread_data *td) { return 0; }
+static int myfio_setup(struct thread_data *td) {
+    force_exit_udm_cache();
+    return 0;
+}
 
 static int myfio_getevents(struct thread_data *td, unsigned int min, unsigned int max,
                            const struct timespec *t) {

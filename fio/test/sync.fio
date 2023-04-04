@@ -2,7 +2,7 @@
 ioengine=sync
 thread=1
 direct=1
-rw=randread
+rw=randwrite
 time_based=1
 runtime=10
 size=1G

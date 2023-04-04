@@ -6,7 +6,7 @@
  *  Date: 2023/03/19
  *  Description: udm-cache的操作接口，包含建立、提交與刪除等
  *              admin: init > running > exit
- *              users: link > running > free
+ *              users: link > running > free X 暫時無法link到SPDK
  */
 
 #include "cache_type.h"

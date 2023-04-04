@@ -6,12 +6,12 @@ direct=1
 group_reporting=1
 
 bs=4k
-rw=randread
+rw=randwrite
 time_based=1
-runtime=60
+runtime=300
 filename=testfile
 
 [test]
-size=2G
+size=500MB
 
 ;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myfio/myfio.fio
