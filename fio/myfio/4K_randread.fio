@@ -1,0 +1,17 @@
+[global]
+ioengine=/home/hyam/spdk/build/fio/myfio
+
+thread=1
+direct=1
+group_reporting=1
+
+bs=4k
+rw=randread
+time_based=1
+runtime=300
+filename=testfile
+
+[test]
+size=2GB
+
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myfio/4K_randread.fio

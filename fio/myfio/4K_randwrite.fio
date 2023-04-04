@@ -12,6 +12,6 @@ runtime=300
 filename=testfile
 
 [test]
-size=500MB
+size=2GB
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myfio/myfio.fio
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myfio/4K_randwrite.fio

@@ -12,13 +12,6 @@
  *  Description: 壓力測試 admin submit pio (read only)
  */
 
-/**
- * 實驗記錄 跑1000萬次
- * hit time = 4989637, miss time = 5010363, hit ratio = 49.90%
- * 292.30user 49.55system 23:11.36elapsed 24%CPU (0avgtext+0avgdata 12008maxresident)k
- * 17998592inputs+20038176outputs (1major+2320minor)pagefaults 0swaps
- */
-
 #define ROUND 10000000  // submit次數
 #define EXCEPT 50       // 期望的 hit ratio
 #define FILE_NAME "testfile"

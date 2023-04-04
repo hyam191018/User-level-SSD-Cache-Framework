@@ -15,18 +15,6 @@
  */
 
 /**
- * 實驗記錄 r3 w3 optw4 各跑100萬次
- * hit time = 4997965, miss time = 5002035, hit ratio = 50%
- * free rc = 0
- * exit rc = 0
- * 282.48user
- * 107.89system
- * 2:51.35elapsed
- * 227%CPU (0avgtext+0avgdata 6904maxresident)k
- * 0inputs+0outputs (0major+613minor)pagefaults 0swaps
- */
-
-/**
  * 實驗記錄 r3 w3 optw4 各跑1000萬次
  * hit time = 49956543, miss time = 50043457, hit ratio = 49.96%
  * 25分鐘左右
