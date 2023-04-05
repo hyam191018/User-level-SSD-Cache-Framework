@@ -28,6 +28,7 @@ typedef enum { PROMOTION, DEMOTION, WRITEBACK } mg_type;
 
 /* spdk setting */
 #define NVME_ADDR "0000:04:00.0"
+#define IODEPTH 32
 
 /* may increase hit ratio */
 #define unlikely(x) __builtin_expect(!!(x), 0)
