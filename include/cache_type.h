@@ -1,7 +1,7 @@
 #ifndef CACHE_TYPE_H
 #define CACHE_TYPE_H
 
-/*
+/**
  *  Author: Hyam
  *  Date: 2023/03/17
  *  Description: udm-cache核心資料結構, cache 與 mapping
@@ -76,7 +76,7 @@ typedef struct {
 
 typedef struct {
     bool running;    // 是否已經init成功
-    unsigned count;  // 使用人數(包含admin)
+    unsigned count;  // 使用中的process數(包含admin)
     spinlock lock;   // protect init, link cache
 } state;
 
