@@ -16,9 +16,9 @@ static void *migration(void *arg) {
             // 沒事做的話，檢查是否有取消請求
             if (is_empty(&shared_cache->cache_map.wq)) {
                 pthread_testcancel();
+                nanosleep(&ts, NULL);
             }
         }
-        nanosleep(&ts, NULL);
     }
     free_dma_buffer(dma_buf);
     return NULL;
