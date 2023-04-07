@@ -1,10 +1,10 @@
 #include "spdk.h"
 
+#include "atomic.h"
 #include "spdk/env.h"
 #include "spdk/nvme.h"
 
 struct ctrlr_entry {
-    bool isfind;
     struct spdk_nvme_ctrlr *ctrlr;
     char name[1024];
 };
@@ -54,7 +54,9 @@ static void reset_ctrlr_and_ns(void) {
 }
 
 static void create_qpair(void) {
-    tgt_ns.qpair = spdk_nvme_ctrlr_alloc_io_qpair(tgt_ns.ctrlr, NULL, 0);
+    struct spdk_nvme_io_qpair_opts opts;
+    spdk_nvme_ctrlr_get_default_io_qpair_opts(tgt_ctrlr.ctrlr, &opts, sizeof(opts));
+    tgt_ns.qpair = spdk_nvme_ctrlr_alloc_io_qpair(tgt_ctrlr.ctrlr, &opts, sizeof(opts));
     if (!tgt_ns.qpair) {
         printf("ERROR: spdk_nvme_ctrlr_alloc_io_qpair() failed\n");
     }
@@ -88,6 +90,7 @@ static void attach_cb(void *cb_ctx, const struct spdk_nvme_transport_id *trid,
     cdata = spdk_nvme_ctrlr_get_data(ctrlr);
     snprintf(tgt_ctrlr.name, sizeof(tgt_ctrlr.name), "%-20.20s (%-20.20s)", cdata->mn, cdata->sn);
     tgt_ctrlr.ctrlr = ctrlr;
+
     // 只使用第一個 namespace
     for (nsid = spdk_nvme_ctrlr_get_first_active_ns(ctrlr); nsid != 0;
          nsid = spdk_nvme_ctrlr_get_next_active_ns(ctrlr, nsid)) {
@@ -106,6 +109,12 @@ static void parse_args(struct spdk_env_opts *env_opts) {
 }
 
 /* --------------------------------------------------- */
+
+void *alloc_dma_buffer(unsigned len) {
+    return spdk_zmalloc(len, 0x1000, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
+}
+
+void free_dma_buffer(void *dma_buf) { spdk_free(dma_buf); }
 
 int init_spdk(void) {
     struct spdk_env_opts opts;
@@ -154,28 +163,21 @@ void get_device_info(unsigned *block_size, unsigned long *device_size) {
     *device_size = spdk_nvme_ns_get_size(tgt_ns.ns);
 }
 
-void *alloc_dma_buffer(unsigned len) {
-    void *dma_buf = spdk_zmalloc(len, 0x1000, NULL, SPDK_ENV_SOCKET_ID_ANY, SPDK_MALLOC_DMA);
-    return dma_buf;
-}
-
-void free_dma_buffer(void *dma_buf) { spdk_free(dma_buf); }
-
 int read_spdk(void *dma_buf, unsigned long offset_block, unsigned num_block) {
     int rc = 0;
     bool is_completed = false;
     rc = spdk_nvme_ns_cmd_read(tgt_ns.ns, tgt_ns.qpair, dma_buf, offset_block, num_block,
                                read_complete, &is_completed, 0);
     if (rc) {
-        fprintf(stderr, "starting read I/O failed\n");
+        fprintf(stderr, "starting write I/O failed\n");
         return rc;
     }
     while (!is_completed) {
         spdk_nvme_qpair_process_completions(tgt_ns.qpair, 0);
     }
+
     return 0;
 }
-
 int write_spdk(void *dma_buf, unsigned long offset_block, unsigned num_block) {
     int rc = 0;
     bool is_completed = false;
@@ -188,6 +190,7 @@ int write_spdk(void *dma_buf, unsigned long offset_block, unsigned num_block) {
     while (!is_completed) {
         spdk_nvme_qpair_process_completions(tgt_ns.qpair, 0);
     }
+
     return 0;
 }
 
