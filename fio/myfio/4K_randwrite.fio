@@ -8,10 +8,10 @@ group_reporting=1
 bs=4k
 rw=randwrite
 time_based=1
-runtime=300
+runtime=20
 filename=testfile
 
 [test]
-size=2GB
+size=500MB
 
 ;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myfio/4K_randwrite.fio

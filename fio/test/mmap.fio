@@ -1,8 +1,7 @@
 [global]
-ioengine=sync
+ioengine=mmap
 thread=1
-direct=1
-rw=randread
+rw=randwrite
 bs=4KB
 time_based=1
 runtime=10
