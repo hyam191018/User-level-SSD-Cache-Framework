@@ -58,8 +58,8 @@ static void *writeback(void *arg) {
         if (!do_writeback_work(&shared_cache->cache_map, dma_buf)) {
             // 沒事做的話，檢查是否有取消請求
             pthread_testcancel();
+            nanosleep(&ts, NULL);
         }
-        nanosleep(&ts, NULL);
     }
     free_dma_buffer(dma_buf);
     return NULL;
@@ -116,7 +116,8 @@ int init_udm_cache(void) {
         LOG2(CACHE_BLOCK_SIZE / shared_cache->cache_dev.block_size);
     shared_cache->cache_dev.block_per_page_shift =
         LOG2(PAGE_SIZE / shared_cache->cache_dev.block_size);
-    if (shared_cache->cache_dev.device_size < CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE) {
+    unsigned long target_size = (unsigned long)CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE;
+    if (shared_cache->cache_dev.device_size < target_size) {
         printf("Error: Cache device size is not enough for setting cblock number\n");
         return 1;
     }
