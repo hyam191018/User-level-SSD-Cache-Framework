@@ -41,7 +41,7 @@ static int myfio_iomem_alloc(struct thread_data *td, size_t total_mem) {
 
 static void myfio_iomem_free(struct thread_data *td) { spdk_dma_free(td->orig_buffer); }
 
-// 開始做讀寫 模擬sync.c
+// 開始做讀寫
 static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) {
     struct pio *head = NULL;
     switch (io_u->ddir) {
