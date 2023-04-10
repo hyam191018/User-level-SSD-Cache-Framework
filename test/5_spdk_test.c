@@ -1,6 +1,7 @@
 #include <sys/sem.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include "spdk.h"
 #include "stdinc.h"
@@ -11,24 +12,33 @@
  *  Description: SPDK 正向測試 寫入資料、讀出資料，multi-thread競爭
  */
 
+#define MAX_LBA 2097152
+#define ROUND 10
+#define USERS 10
+
 static void* user_func(void* arg) {
-    void* buf = alloc_dma_buffer(PAGE_SIZE);
-    sprintf(buf, "I am pthread %ld.\n", pthread_self());
-    write_spdk(buf, 0, 8);
-    memset(buf, 0, PAGE_SIZE);
-    read_spdk(buf, 0, 8);
-    printf("%ld say: %s", pthread_self(), (char*)buf);
+    void* buf;
+    unsigned lba;
+    for (int i = 0; i < ROUND; i++) {
+        buf = alloc_dma_buffer(PAGE_SIZE);
+        lba = rand() % MAX_LBA;
+        sprintf(buf, "I am pthread %ld", pthread_self());
+        write_spdk(buf, lba, 8);
+        memset(buf, 0, PAGE_SIZE);
+        read_spdk(buf, lba, 8);
+        // printf("%s\n", (char*)buf);
+    }
     return NULL;
 }
 
 int main(int argc, char* argv[]) {
     init_spdk();
-    const int user_num = 100;
-    pthread_t user[user_num];
-    for (int i = 0; i < user_num; i++) {
+    srand(time(NULL));
+    pthread_t user[USERS];
+    for (int i = 0; i < USERS; i++) {
         pthread_create(&user[i], NULL, &user_func, NULL);
     }
-    for (int i = 0; i < user_num; i++) {
+    for (int i = 0; i < USERS; i++) {
         pthread_join(user[i], NULL);
     }
     trim_spdk(0, 8);
