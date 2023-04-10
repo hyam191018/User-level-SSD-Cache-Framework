@@ -5,6 +5,7 @@
  *  Author: Hyam
  *  Date: 2023/03/21
  *  Description: 由users提交work，admin取得work，work queue中的work不可重複
+ *                  目前是使用循環陣列，導致有效能瓶頸，應該能設計更好的演算法
  *              (解 1 consumer N producer 問題)
  */
 
