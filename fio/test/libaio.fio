@@ -2,7 +2,7 @@
 ioengine=libaio
 thread=1
 direct=1
-rw=randwrite
+rw=randread
 time_based=1
 runtime=10
 size=1G

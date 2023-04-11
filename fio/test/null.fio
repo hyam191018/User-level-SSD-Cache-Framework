@@ -1,7 +1,6 @@
 [global]
 ioengine=null
 thread=1
-direct=1
 rw=randwrite
 bs=4KB
 time_based=1
