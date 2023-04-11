@@ -20,10 +20,10 @@ typedef enum { PROMOTION, DEMOTION, WRITEBACK } mg_type;
 #define PAGE_SIZE (1 << PAGE_SHIFT)
 #define MOD_PAGE_PER_CBLOCK_SHIFT 0b111  // and 0b111 = mod 8
 
-#define MAX_PATH_SIZE (1 << 5)                        // full_path_name maximum length
-#define WRITEBACK_DELAY 10000000                      // 10ms
-#define MIGRATION_DELAY 10000000                      // 10ms
-#define MAX_WORKQUEUE_SIZE (CACHE_BLOCK_NUMBER >> 1)  // promotion queue
+#define MAX_PATH_SIZE (1 << 5)       // full_path_name maximum length
+#define WRITEBACK_DELAY 10000000     // 10ms (heuristic)
+#define MIGRATION_DELAY 10000000     // 10ms (heuristic)
+#define MAX_WORKQUEUE_SIZE (1 << 4)  // promotion queue (heuristic)
 
 /* share memory */
 #define SHM_CACHE_NAME "/udm_cache"
