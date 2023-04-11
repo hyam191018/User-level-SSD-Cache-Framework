@@ -127,7 +127,7 @@ int init_udm_cache(void) {
         return 1;
     }
     wakeup_mg_worker();
-    wakeup_wb_worker();
+    // wakeup_wb_worker();
     spinlock_init(&shared_cache->cache_state.lock);
     shared_cache->cache_state.running = true;
     shared_cache->cache_state.count = 0;
@@ -189,7 +189,7 @@ int exit_udm_cache(void) {
         spinlock_unlock(&shared_cache->cache_state.lock);
         sleep(1);
     }
-    shutdown_wb_worker();
+    // shutdown_wb_worker();
     shutdown_mg_worker();
     exit_spdk();
     if (unmap_shm(shared_cache, sizeof(struct cache))) {
