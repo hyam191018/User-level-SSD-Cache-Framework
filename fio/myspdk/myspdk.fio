@@ -1,14 +1,14 @@
 [global]
 ioengine=/home/hyam/spdk/build/fio/myspdk
 
-thread=4
+thread=1
 direct=1
 group_reporting=1
 iodepth=1
 bs=4k
 rw=randread
 time_based=1
-runtime=30
+runtime=60
 filename=testfile
 
 [test]
