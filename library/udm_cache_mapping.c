@@ -536,17 +536,17 @@ bool do_migration_work(mapping *mapping, void *dma_buf) {
         if (promotion_free_to_clean(mapping, full_path_name, cache_page_index, &cblock)) {
             success =
                 mg_start(mapping, dma_buf, full_path_name, cache_page_index, cblock, PROMOTION);
-            //          Complete promotion
+            // Complete promotion
             promotion_complete(mapping, &cblock, success);
         } else if (demotion_clean_to_free(mapping, &cblock)) {
             success = mg_start(mapping, NULL, NULL, 0, cblock, DEMOTION);
-            //      Complete demotion
+            // Complete demotion
             demotion_complete(mapping, &cblock, success);
         } else if (writeback_dirty_to_clean(mapping, &cblock)) {
             struct entry *e = to_entry(&mapping->es, cblock);
             success = mg_start(mapping, dma_buf, e->full_path_name, e->cache_page_index, cblock,
                                WRITEBACK);
-            //        Complete writeback
+            // Complete writeback
             writeback_complete(mapping, &cblock, success);
         }
         remove_work(&mapping->wq);
