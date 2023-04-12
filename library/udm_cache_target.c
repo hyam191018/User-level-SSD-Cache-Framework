@@ -21,7 +21,7 @@ static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
     int rc;
     while (pio) {
         rc = write_spdk(pio->buffer, target_block, 1 << cache->cache_dev.block_per_page_shift,
-                        IO_QUEUE);
+                        IO_WRITE_QUEUE);
         target_block += 1 << cache->cache_dev.block_per_page_shift;
         if (rc) {
             return rc;
@@ -40,7 +40,7 @@ static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
     int rc;
     while (pio) {
         rc = read_spdk(pio->buffer, target_block, 1 << cache->cache_dev.block_per_page_shift,
-                       IO_QUEUE);
+                       IO_READ_QUEUE);
         target_block += 1 << cache->cache_dev.block_per_page_shift;
         if (rc) {
             return rc;

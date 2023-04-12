@@ -13,7 +13,7 @@
 #define NVME_ADDR "0000:04:00.0"
 #define IODEPTH 32
 
-typedef enum { IO_QUEUE, MG_QUEUE } queue_type;
+typedef enum { IO_READ_QUEUE, IO_WRITE_QUEUE, MG_READ_QUEUE, MG_WRITE_QUEUE } queue_type;
 
 /**
  * Description: Init spdk, find controller > create namespace > create qpair
@@ -67,6 +67,6 @@ int write_spdk(void* buf, unsigned long offset_block, unsigned num_block, queue_
  * Return:  0, if success
  *          non-zero, if fail
  */
-int trim_spdk(unsigned long offset_block, unsigned num_block);
+int trim_spdk(unsigned long offset_block, unsigned num_block, queue_type type);
 
 #endif
