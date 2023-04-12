@@ -1,7 +1,3 @@
-#include <sys/sem.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
 #include "cache_api.h"
 #include "spdk.h"
 #include "stdinc.h"
@@ -13,12 +9,9 @@
  */
 
 #define FILE_NAME "testfile"
-const unsigned long long MAX_PAGE_INDEX =
-    (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT * 4ull);
 
 int main(int argc, char* argv[]) {
     // 開啟 udm-cache
-    force_exit_udm_cache();
     printf("%d init rc = %d\n", getpid(), init_udm_cache());
 
     /* how to test? */
