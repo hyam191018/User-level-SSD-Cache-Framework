@@ -4,9 +4,9 @@
 #include "pio.h"
 
 /**
- *  Author: Hyam
- *  Date: 2023/03/28
- *  Description: 測試 pio
+ *  @author Hyam
+ *  @date 2023/03/28
+ *  @brief 測試 pio
  */
 
 int main(void) {

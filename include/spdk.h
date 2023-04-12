@@ -32,19 +32,19 @@ void exit_spdk(void);
  * Description: Get device info, must init spdk first
  * number of lba Return:  No return value
  */
-void get_device_info(unsigned* block_size /*(512, 4096)*/,
-                     unsigned long* device_size /* number of lba*/);
+void get_device_info(unsigned* block_size, unsigned long* device_size);
 
 /**
- * Description: Allocate dma buffer for spdk io
- * Return:  address, if success
- *          NULL, if no free space
+ * @brief Allocate dma buffer for spdk io
+ * @param len - The size in bytes of the DMA buffer to allocate.
+ * @return address, if success
+ *         NULL, if no free space
  */
 void* alloc_dma_buffer(unsigned len);
 
 /**
- * Description: Free dma buffer
- * Return:  No return value
+ * @brief Free dma buffer.
+ * @return No return value.
  */
 void free_dma_buffer(void* dma_buf);
 

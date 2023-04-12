@@ -7,9 +7,9 @@
 #include "work_queue.h"
 
 /**
- *  Author: Hyam
- *  Date: 2023/03/28
- *  Description: 壓力測試 work_queue，不可insert相同的work
+ *  @author Hyam
+ *  @date 2023/03/28
+ *  @brief 壓力測試 work_queue，不可insert相同的work
  */
 
 #define MAX_WORKS 10

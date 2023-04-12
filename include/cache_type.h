@@ -2,9 +2,9 @@
 #define CACHE_TYPE_H
 
 /**
- *  Author: Hyam
- *  Date: 2023/03/17
- *  Description: udm-cache核心資料結構, cache 與 mapping
+ *  @author Hyam
+ *  @date 2023/03/17
+ *  @brief udm-cache核心資料結構, cache 與 mapping
  */
 
 #include "atomic.h"

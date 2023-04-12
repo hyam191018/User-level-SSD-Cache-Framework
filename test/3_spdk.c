@@ -7,25 +7,24 @@
 #include "stdinc.h"
 
 /**
- *  Author: Hyam
- *  Date: 2023/04/02
- *  Description: SPDK 正向測試 寫入資料、讀出資料，multi-thread競爭
+ *  @author Hyam
+ *  @date 2023/04/02
+ *  @brief SPDK 正向測試 寫入資料、讀出資料，multi-thread競爭
  */
 
 #define MAX_LBA 2097152
-#define ROUND 10000
-#define USERS 2
+#define ROUND 1000
 
-static void* user_func(void* arg) {
+static void* admin_func(void* arg) {
     void* buf;
     unsigned lba;
     for (int i = 0; i < ROUND; i++) {
         buf = alloc_dma_buffer(PAGE_SIZE);
         lba = rand() % MAX_LBA;
         sprintf(buf, "I am pthread %ld", pthread_self());
-        write_spdk(buf, lba, 8, IO_QUEUE);
+        write_spdk(buf, lba, 8, IO_WRITE_QUEUE);
         memset(buf, 0, PAGE_SIZE);
-        read_spdk(buf, lba, 8, IO_QUEUE);
+        read_spdk(buf, lba, 8, IO_READ_QUEUE);
     }
     return NULL;
 }
@@ -37,9 +36,9 @@ static void* mg_func(void* arg) {
         buf = alloc_dma_buffer(PAGE_SIZE);
         lba = rand() % MAX_LBA;
         sprintf(buf, "I am pthread %ld", pthread_self());
-        write_spdk(buf, lba, 8, MG_QUEUE);
+        write_spdk(buf, lba, 8, MG_WRITE_QUEUE);
         memset(buf, 0, PAGE_SIZE);
-        read_spdk(buf, lba, 8, MG_QUEUE);
+        read_spdk(buf, lba, 8, MG_READ_QUEUE);
     }
     return NULL;
 }
@@ -47,13 +46,12 @@ static void* mg_func(void* arg) {
 int main(int argc, char* argv[]) {
     init_spdk();
     srand(time(NULL));
-    pthread_t user[USERS];
-    pthread_create(&user[0], NULL, &user_func, NULL);
-    pthread_create(&user[1], NULL, &mg_func, NULL);
+    pthread_t admin, worker;
+    pthread_create(&admin, NULL, &admin_func, NULL);
+    pthread_create(&worker, NULL, &mg_func, NULL);
 
-    pthread_join(user[0], NULL);
-    pthread_join(user[1], NULL);
+    pthread_join(admin, NULL);
+    pthread_join(worker, NULL);
 
-    trim_spdk(0, 8);
     exit_spdk();
 }

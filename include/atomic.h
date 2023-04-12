@@ -2,9 +2,9 @@
 #define ATOMIC_H
 
 /**
- *  Author: Hyam
- *  Date: 2023/03/17
- *  Description: Spinlock
+ *  @author Hyam
+ *  @date 2023/03/17
+ *  @brief Spinlock
  */
 
 #include <stdatomic.h>
@@ -14,20 +14,23 @@ typedef struct {
 } spinlock;
 
 /**
- * Description: Init lock
- * Return:  No return value
+ * @brief Init lock
+ * @param lock - Shared lock
+ * @return No return value
  */
 void spinlock_init(spinlock* lock);
 
 /**
- * Description: Try to get lock
- * Return:  No return value
+ * @brief Try to get lock
+ * @param lock - Shared lock
+ * @return No return value
  */
 void spinlock_lock(spinlock* lock);
 
 /**
- * Description: Release lock
- * Return:  No return value
+ * @brief Release lock
+ * @param lock - Shared lock
+ * @return No return value
  */
 void spinlock_unlock(spinlock* lock);
 

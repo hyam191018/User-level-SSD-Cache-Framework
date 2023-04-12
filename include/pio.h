@@ -2,9 +2,9 @@
 #define PIO_H
 
 /**
- *  Author: Hyam
- *  Date: 2023/03/17
- *  Description: 對 page io的建立與操作，以便後續使用submit_pio向udm-cache提交
+ *  @author Hyam
+ *  @date 2023/03/17
+ *  @brief 對 page io的建立與操作，以便後續使用submit_pio向udm-cache提交
  */
 
 #include "config.h"
@@ -22,28 +22,38 @@ struct pio {
 };
 
 /**
- * Description: create a pio head
- * Return:  pio address, if success
- *          NULL, if fail
+ * @brief Create a pio head
+ * @param full_path_name - File name
+ * @param fd - File descriptor, for fio test
+ * @param page_index - Offset of file, size is 4KB
+ * @param operation - READ, WRITE, DISCARD, FLUSH
+ * @param buffer - User buffer, must allocated by alloc_dma_buf
+ * @param pio_cnt - Number of pio node
+ * @return pio address, if success
+ *         NULL, if fail
  */
 struct pio* create_pio(char* full_path_name, int fd, unsigned page_index, operate operation,
                        void* buffer, unsigned pio_cnt);
 
 /**
- * Description: Append pio node
- * Return:  No return value
+ * @brief Append pio node
+ * @param head - Address of pio
+ * @param buffer - User buffer, must allocated by alloc_dma_buf
+ * @return No return value
  */
 void append_pio(struct pio* head, void* buffer);
 
 /**
- * Description: Free all pio nodes
- * Return:  No return value
+ * @brief Free all pio nodes
+ * @param head - Address of pio
+ * @return No return value
  */
 void free_pio(struct pio* head);
 
 /**
- * Description: Print pio information
- * Return:  No return value
+ * @brief Print pio information
+ * @param head - Address of pio
+ * @return No return value
  */
 void print_pio(struct pio* head);
 
