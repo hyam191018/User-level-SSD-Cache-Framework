@@ -8,7 +8,7 @@ iodepth=1
 bs=4k
 rw=randread
 time_based=1
-runtime=60
+runtime=30
 filename=testfile
 
 [test]
