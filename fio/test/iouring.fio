@@ -12,5 +12,5 @@ size=1G
 [filename0]
 filename=testfile
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/test/uring.fio
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/test/iouring.fio
 
