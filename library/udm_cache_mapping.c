@@ -558,7 +558,6 @@ bool do_migration_work(mapping *mapping, void *dma_buf) {
 bool do_writeback_work(mapping *mapping, void *dma_buf) {
     unsigned cblock;
     bool success = true;
-    printf("mewo\n");
     if (writeback_dirty_to_clean(mapping, &cblock)) {
         struct entry *e = to_entry(&mapping->es, cblock);
         success =
