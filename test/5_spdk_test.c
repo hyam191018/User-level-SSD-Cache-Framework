@@ -13,8 +13,8 @@
  */
 
 #define MAX_LBA 2097152
-#define ROUND 10
-#define USERS 10
+#define ROUND 10000
+#define USERS 2
 
 static void* user_func(void* arg) {
     void* buf;
@@ -23,10 +23,23 @@ static void* user_func(void* arg) {
         buf = alloc_dma_buffer(PAGE_SIZE);
         lba = rand() % MAX_LBA;
         sprintf(buf, "I am pthread %ld", pthread_self());
-        write_spdk(buf, lba, 8);
+        write_spdk(buf, lba, 8, IO_QUEUE);
         memset(buf, 0, PAGE_SIZE);
-        read_spdk(buf, lba, 8);
-        // printf("%s\n", (char*)buf);
+        read_spdk(buf, lba, 8, IO_QUEUE);
+    }
+    return NULL;
+}
+
+static void* mg_func(void* arg) {
+    void* buf;
+    unsigned lba;
+    for (int i = 0; i < ROUND; i++) {
+        buf = alloc_dma_buffer(PAGE_SIZE);
+        lba = rand() % MAX_LBA;
+        sprintf(buf, "I am pthread %ld", pthread_self());
+        write_spdk(buf, lba, 8, MG_QUEUE);
+        memset(buf, 0, PAGE_SIZE);
+        read_spdk(buf, lba, 8, MG_QUEUE);
     }
     return NULL;
 }
@@ -35,12 +48,12 @@ int main(int argc, char* argv[]) {
     init_spdk();
     srand(time(NULL));
     pthread_t user[USERS];
-    for (int i = 0; i < USERS; i++) {
-        pthread_create(&user[i], NULL, &user_func, NULL);
-    }
-    for (int i = 0; i < USERS; i++) {
-        pthread_join(user[i], NULL);
-    }
+    pthread_create(&user[0], NULL, &user_func, NULL);
+    pthread_create(&user[1], NULL, &mg_func, NULL);
+
+    pthread_join(user[0], NULL);
+    pthread_join(user[1], NULL);
+
     trim_spdk(0, 8);
     exit_spdk();
 }

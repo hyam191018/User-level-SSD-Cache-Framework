@@ -9,6 +9,12 @@
 
 #include "config.h"
 
+/* spdk setting */
+#define NVME_ADDR "0000:04:00.0"
+#define IODEPTH 32
+
+typedef enum { IO_QUEUE, MG_QUEUE } queue_type;
+
 /**
  * Description: Init spdk, find controller > create namespace > create qpair
  * Return:  Retrun 0, if success
@@ -47,14 +53,14 @@ void free_dma_buffer(void* dma_buf);
  * Return:  0, if success
  *          non-zero, if fail
  */
-int read_spdk(void* buf, unsigned long offset_block, unsigned num_block);
+int read_spdk(void* buf, unsigned long offset_block, unsigned num_block, queue_type type);
 
 /**
  * Description: Write to SPDK, using buffer allocated from alloc_amd_buffer
  * Return:  0, if success
  *          non-zero, if fail
  */
-int write_spdk(void* buf, unsigned long offset_block, unsigned num_block);
+int write_spdk(void* buf, unsigned long offset_block, unsigned num_block, queue_type type);
 
 /**
  * Description: Perform data trimming and mark the block as invalid
