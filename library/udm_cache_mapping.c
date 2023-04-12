@@ -488,7 +488,7 @@ static bool mg_start(mapping *mapping, void *dma_buf, char *full_path_name,
             close(fd);
             // write to SSD
             if (write_spdk(dma_buf, cblock << mapping->block_per_cblock_shift,
-                           1 << mapping->block_per_cblock_shift)) {
+                           1 << mapping->block_per_cblock_shift, MG_QUEUE)) {
                 printf("Error: write SSD fail\n");
                 return false;
             }
@@ -501,7 +501,7 @@ static bool mg_start(mapping *mapping, void *dma_buf, char *full_path_name,
         case WRITEBACK:
             // read from SSD
             if (read_spdk(dma_buf, cblock << mapping->block_per_cblock_shift,
-                          1 << mapping->block_per_cblock_shift)) {
+                          1 << mapping->block_per_cblock_shift, MG_QUEUE)) {
                 printf("Error: read SSD fail\n");
                 return false;
             }
