@@ -8,10 +8,7 @@ struct ctrlr_entry {
     char name[1024];
     struct spdk_nvme_ctrlr *ctrlr;
     struct spdk_nvme_ns *ns;
-    struct spdk_nvme_qpair *io_read_qpair;
-    struct spdk_nvme_qpair *io_write_qpair;
-    struct spdk_nvme_qpair *mg_read_qpair;
-    struct spdk_nvme_qpair *mg_write_qpair;
+    struct spdk_nvme_qpair **qpair;
     bool isfind;
 };
 
@@ -34,65 +31,13 @@ static void reset_ctrlr_and_ns(void) { memset(&target, 0, sizeof(struct ctrlr_en
 static void create_qpair(queue_type type) {
     struct spdk_nvme_io_qpair_opts opts;
     spdk_nvme_ctrlr_get_default_io_qpair_opts(target.ctrlr, &opts, sizeof(opts));
-    switch (type) {
-        case IO_READ_QUEUE:
-            target.io_read_qpair =
-                spdk_nvme_ctrlr_alloc_io_qpair(target.ctrlr, &opts, sizeof(opts));
-            if (!target.io_read_qpair) {
-                printf("ERROR: spdk_nvme_ctrlr_alloc_io_qpair() failed\n");
-            }
-            break;
-
-        case IO_WRITE_QUEUE:
-            target.io_write_qpair =
-                spdk_nvme_ctrlr_alloc_io_qpair(target.ctrlr, &opts, sizeof(opts));
-            if (!target.io_write_qpair) {
-                printf("ERROR: spdk_nvme_ctrlr_alloc_io_qpair() failed\n");
-            }
-            break;
-        case MG_READ_QUEUE:
-            target.mg_read_qpair =
-                spdk_nvme_ctrlr_alloc_io_qpair(target.ctrlr, &opts, sizeof(opts));
-            if (!target.mg_read_qpair) {
-                printf("ERROR: spdk_nvme_ctrlr_alloc_io_qpair() failed\n");
-            }
-            break;
-
-        case MG_WRITE_QUEUE:
-            target.mg_write_qpair =
-                spdk_nvme_ctrlr_alloc_io_qpair(target.ctrlr, &opts, sizeof(opts));
-            if (!target.mg_write_qpair) {
-                printf("ERROR: spdk_nvme_ctrlr_alloc_io_qpair() failed\n");
-            }
-            break;
-
-        default:
-            break;
+    target.qpair[type] = spdk_nvme_ctrlr_alloc_io_qpair(target.ctrlr, &opts, sizeof(opts));
+    if (!target.qpair[type]) {
+        printf("ERROR: spdk_nvme_ctrlr_alloc_io_qpair() failed\n");
     }
 }
 
-static void destroy_qpair(queue_type type) {
-    switch (type) {
-        case IO_READ_QUEUE:
-            spdk_nvme_ctrlr_free_io_qpair(target.io_read_qpair);
-            break;
-
-        case IO_WRITE_QUEUE:
-            spdk_nvme_ctrlr_free_io_qpair(target.io_write_qpair);
-            break;
-
-        case MG_READ_QUEUE:
-            spdk_nvme_ctrlr_free_io_qpair(target.mg_read_qpair);
-            break;
-
-        case MG_WRITE_QUEUE:
-            spdk_nvme_ctrlr_free_io_qpair(target.mg_write_qpair);
-            break;
-
-        default:
-            break;
-    }
-}
+static void destroy_qpair(queue_type type) { spdk_nvme_ctrlr_free_io_qpair(target.qpair[type]); }
 
 static void register_ns(struct spdk_nvme_ctrlr *ctrlr, struct spdk_nvme_ns *ns) {
     if (!spdk_nvme_ns_is_active(ns)) {
@@ -168,10 +113,11 @@ int init_spdk(void) {
     }
 
     // 建立qpair用於IO
-    create_qpair(IO_READ_QUEUE);
-    create_qpair(IO_WRITE_QUEUE);
-    create_qpair(MG_READ_QUEUE);
-    create_qpair(MG_WRITE_QUEUE);
+    target.qpair = calloc(QPAIR_COUNT, sizeof(struct spdk_nvme_qpair *));
+    for (unsigned type = 0; type < QPAIR_COUNT; type++) {
+        create_qpair(type);
+    }
+
     return 0;
 }
 
@@ -180,10 +126,9 @@ void exit_spdk(void) {
         printf("Error: No namespace found");
         return;
     }
-    destroy_qpair(IO_READ_QUEUE);
-    destroy_qpair(IO_WRITE_QUEUE);
-    destroy_qpair(MG_READ_QUEUE);
-    destroy_qpair(MG_WRITE_QUEUE);
+    for (unsigned type = 0; type < QPAIR_COUNT; type++) {
+        destroy_qpair(type);
+    }
     spdk_nvme_detach(target.ctrlr);
     spdk_env_fini();
     reset_ctrlr_and_ns();
@@ -201,16 +146,14 @@ void get_device_info(unsigned *block_size, unsigned long *device_size) {
 int read_spdk(void *dma_buf, unsigned long offset_block, unsigned num_block, queue_type type) {
     int rc = 0;
     bool is_completed = false;
-    rc = spdk_nvme_ns_cmd_read(target.ns,
-                               type == IO_READ_QUEUE ? target.io_read_qpair : target.mg_read_qpair,
-                               dma_buf, offset_block, num_block, io_complete, &is_completed, 0);
+    rc = spdk_nvme_ns_cmd_read(target.ns, target.qpair[type], dma_buf, offset_block, num_block,
+                               io_complete, &is_completed, 0);
     if (rc) {
         fprintf(stderr, "starting read I/O failed\n");
         return rc;
     }
     while (!is_completed) {
-        spdk_nvme_qpair_process_completions(
-            type == IO_READ_QUEUE ? target.io_read_qpair : target.mg_read_qpair, 0);
+        spdk_nvme_qpair_process_completions(target.qpair[type], 0);
     }
 
     return 0;
@@ -218,16 +161,14 @@ int read_spdk(void *dma_buf, unsigned long offset_block, unsigned num_block, que
 int write_spdk(void *dma_buf, unsigned long offset_block, unsigned num_block, queue_type type) {
     int rc = 0;
     bool is_completed = false;
-    rc = spdk_nvme_ns_cmd_write(
-        target.ns, type == IO_WRITE_QUEUE ? target.io_write_qpair : target.mg_write_qpair, dma_buf,
-        offset_block, num_block, io_complete, &is_completed, 0);
+    rc = spdk_nvme_ns_cmd_write(target.ns, target.qpair[type], dma_buf, offset_block, num_block,
+                                io_complete, &is_completed, 0);
     if (rc) {
         fprintf(stderr, "starting write I/O failed\n");
         return rc;
     }
     while (!is_completed) {
-        spdk_nvme_qpair_process_completions(
-            type == IO_WRITE_QUEUE ? target.io_write_qpair : target.mg_write_qpair, 0);
+        spdk_nvme_qpair_process_completions(target.qpair[type], 0);
     }
 
     return 0;
@@ -239,9 +180,9 @@ int trim_spdk(unsigned long offset_block, unsigned num_block, queue_type type) {
     range.starting_lba = offset_block;
     range.length = num_block;
     // 走write qpair
-    rc = spdk_nvme_ns_cmd_dataset_management(
-        target.ns, type == IO_WRITE_QUEUE ? target.io_write_qpair : target.mg_write_qpair,
-        SPDK_NVME_DSM_ATTR_DEALLOCATE, &range, 1, trim_complete, NULL);
+    rc = spdk_nvme_ns_cmd_dataset_management(target.ns, target.qpair[type],
+                                             SPDK_NVME_DSM_ATTR_DEALLOCATE, &range, 1,
+                                             trim_complete, NULL);
     if (rc == -ENOMEM) {
         printf("Error: The request cannot be allocated\n");
     } else if (rc == -ENXIO) {

@@ -12,7 +12,7 @@
 /* spdk setting */
 #define NVME_ADDR "0000:04:00.0"
 #define IODEPTH 32
-
+#define QPAIR_COUNT 4
 typedef enum { IO_READ_QUEUE, IO_WRITE_QUEUE, MG_READ_QUEUE, MG_WRITE_QUEUE } queue_type;
 
 /**
