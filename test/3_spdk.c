@@ -22,9 +22,9 @@ static void* admin_func(void* arg) {
         buf = alloc_dma_buffer(PAGE_SIZE);
         lba = rand() % MAX_LBA;
         sprintf(buf, "I am pthread %ld", pthread_self());
-        write_spdk(buf, lba, 8, IO_WRITE_QUEUE);
+        write_spdk(buf, lba, 8, IO_QUEUE);
         memset(buf, 0, PAGE_SIZE);
-        read_spdk(buf, lba, 8, IO_READ_QUEUE);
+        read_spdk(buf, lba, 8, IO_QUEUE);
     }
     return NULL;
 }
@@ -36,9 +36,9 @@ static void* mg_func(void* arg) {
         buf = alloc_dma_buffer(PAGE_SIZE);
         lba = rand() % MAX_LBA;
         sprintf(buf, "I am pthread %ld", pthread_self());
-        write_spdk(buf, lba, 8, MG_WRITE_QUEUE);
+        write_spdk(buf, lba, 8, MG_QUEUE);
         memset(buf, 0, PAGE_SIZE);
-        read_spdk(buf, lba, 8, MG_READ_QUEUE);
+        read_spdk(buf, lba, 8, MG_QUEUE);
     }
     return NULL;
 }

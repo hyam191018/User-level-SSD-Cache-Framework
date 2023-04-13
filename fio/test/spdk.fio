@@ -3,11 +3,11 @@ ioengine=/home/hyam/spdk/build/fio/spdk_bdev
 spdk_json_conf=/home/hyam/udm-cache/fio/test/bdev.json
 thread=1
 direct=1
-rw=randwrite
+rw=rw
 time_based=1
 runtime=30
 size=1G
-iodepth=1
+iodepth=128
 
 [filename0]
 filename=Nvme0n1
