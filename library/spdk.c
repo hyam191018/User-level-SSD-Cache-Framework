@@ -101,7 +101,7 @@ int init_spdk(void) {
     }
     reset_ctrlr_and_ns();
 
-    // 尋找目標nvme controller和namespace，並分別儲存在target, target
+    // 尋找目標nvme controller和namespace，並分別儲存在target
     if (spdk_nvme_probe(&g_trid, NULL, NULL, attach_cb, NULL)) {
         fprintf(stderr, "spdk_nvme_probe() failed\n");
         return 1;
@@ -112,7 +112,7 @@ int init_spdk(void) {
         return 1;
     }
 
-    // 建立qpair用於IO
+    // 建立qpair
     target.qpair = calloc(QPAIR_COUNT, sizeof(struct spdk_nvme_qpair *));
     for (unsigned type = 0; type < QPAIR_COUNT; type++) {
         create_qpair(type);
@@ -179,7 +179,6 @@ int trim_spdk(unsigned long offset_block, unsigned num_block, queue_type type) {
     struct spdk_nvme_dsm_range range;
     range.starting_lba = offset_block;
     range.length = num_block;
-    // 走write qpair
     rc = spdk_nvme_ns_cmd_dataset_management(target.ns, target.qpair[type],
                                              SPDK_NVME_DSM_ATTR_DEALLOCATE, &range, 1,
                                              trim_complete, NULL);
