@@ -23,15 +23,13 @@
 
 // 開啟udm-cache
 static int myfio_init(struct thread_data *td) {
+    printf("exit rc = %d\n", exit_udm_cache());
     printf("init rc = %d\n", init_udm_cache());
     return 0;
 }
 
 // 關閉udm-cache
-static void myfio_cleanup(struct thread_data *td) {
-    info_udm_cache();
-    printf("exit rc = %d\n", exit_udm_cache());
-}
+static void myfio_cleanup(struct thread_data *td) { info_udm_cache(); }
 
 // 改成自己配置的malloc
 static int myfio_iomem_alloc(struct thread_data *td, size_t total_mem) {
