@@ -1,5 +1,5 @@
-#ifndef CACHE_TYPE_H
-#define CACHE_TYPE_H
+#ifndef CACHE_H
+#define CACHE_H
 
 /**
  *  @author Hyam
@@ -56,8 +56,8 @@ typedef struct {
     struct ilist clean;
     struct ilist dirty;
     struct hash_table table;
-    spinlock mapping_lock;
 
+    spinlock mapping_lock;
     unsigned hit_time;
     unsigned miss_time;
     unsigned promotion_time;
@@ -81,10 +81,9 @@ typedef struct {
 } state;
 
 struct cache {
-    state cache_state;  // share cache 的管理
-    device cache_dev;   // SSD的資訊，由SPDK負責
-    mapping cache_map;  // 管理hash table, clean, dirty, free queue
-
+    state cache_state;    // share cache 的管理
+    device cache_dev;     // SSD的資訊，由SPDK負責
+    mapping cache_map;    // 管理hash table, clean, dirty, free queue
     pthread_t mg_worker;  // 週期性的去work queue找work
     pthread_t wb_worker;  // 週期性的發起writeback
 };

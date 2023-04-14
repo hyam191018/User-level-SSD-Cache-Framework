@@ -9,7 +9,7 @@
  *              users: link > running > free (暫時無法link到SPDK)
  */
 
-#include "cache_type.h"
+#include "cache.h"
 #include "config.h"
 #include "pio.h"
 

@@ -7,7 +7,7 @@
  *  @brief mapping information
  */
 
-#include "cache_type.h"
+#include "cache.h"
 
 /**
  * @brief Init entrys, clean and dirty queue, hash table

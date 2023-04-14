@@ -7,7 +7,7 @@
  *  @brief 查找mapping，並根據結果發起IO
  */
 
-#include "cache_type.h"
+#include "cache.h"
 #include "config.h"
 #include "pio.h"
 
