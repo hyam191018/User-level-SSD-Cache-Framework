@@ -36,7 +36,6 @@ static void *producer(void *arg) {
     while (true) {
         char *full_path_name = gen(3);
         unsigned cp = rand() % 5;
-        // Insert work 的訊息可能不準確，所以是寫在work_queue.c 用lock保護
         if (insert_work(wq, full_path_name, cp)) {
             time++;
             if (time == MAX_WORKS) {
