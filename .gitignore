@@ -7,6 +7,6 @@
 .vscode
 perf*
 main*
-source
 tool
+source
 testfile
