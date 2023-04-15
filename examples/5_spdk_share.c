@@ -16,8 +16,11 @@
  * @brief 測試多用戶存取SPDK
  */
 
-const int test_time = 100;
-const int max_lba = 10;
+// 100w  1 user 44s
+// 100w  3 user 130s
+// 100w 10 user 422s
+const int test_time = 10000;
+const int max_lba = 1000;
 const int user_number = 10;
 
 typedef struct {
@@ -75,9 +78,11 @@ static void user_func(void) {
         write_spdk(buf, lba, 8, MG_QUEUE);
         memset(buf, 0, PAGE_SIZE);
         read_spdk(buf, lba, 8, MG_QUEUE);
-        printf("%s\n", (char*)buf);
     }
     free_dma_buffer(buf);
+    printf("==================\n");
+    printf("|   IO COMPLETE  |\n");
+    printf("==================\n");
 
     // 結束
     exit_spdk();
