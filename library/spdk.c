@@ -95,6 +95,8 @@ int init_spdk(void) {
     spdk_env_opts_init(&opts);
     parse_args(&opts);
     opts.name = "udm-cache-spdk";
+    opts.shm_id = 0;
+
     if (spdk_env_init(&opts) < 0) {
         fprintf(stderr, "Unable to initialize SPDK env\n");
         return 1;
@@ -143,42 +145,37 @@ void get_device_info(unsigned *block_size, unsigned long *device_size) {
     *device_size = spdk_nvme_ns_get_size(target.ns);
 }
 
-unsigned queued[QPAIR_COUNT] = {0};
-
 int read_spdk(void *dma_buf, unsigned long offset_block, unsigned num_block, queue_type type) {
     int rc = 0;
     bool is_completed = false;
     rc = spdk_nvme_ns_cmd_read(target.ns, target.qpair[type], dma_buf, offset_block, num_block,
                                io_complete, &is_completed, 0);
-    queued[type]++;
+
     if (rc) {
         fprintf(stderr, "starting read I/O failed\n");
         return rc;
     }
-    queued[type] -= spdk_nvme_qpair_process_completions(target.qpair[type], 0);
-    if (queued[type] == IODEPTH) {
-        while (queued[type]) {
-            queued[type] -= spdk_nvme_qpair_process_completions(target.qpair[type], 0);
-        }
+
+    while (!is_completed) {
+        spdk_nvme_qpair_process_completions(target.qpair[type], 0);
     }
 
     return 0;
 }
+
 int write_spdk(void *dma_buf, unsigned long offset_block, unsigned num_block, queue_type type) {
     int rc = 0;
     bool is_completed = false;
     rc = spdk_nvme_ns_cmd_write(target.ns, target.qpair[type], dma_buf, offset_block, num_block,
                                 io_complete, &is_completed, 0);
-    queued[type]++;
+
     if (rc) {
         fprintf(stderr, "starting write I/O failed\n");
         return rc;
     }
-    queued[type] -= spdk_nvme_qpair_process_completions(target.qpair[type], 0);
-    if (queued[type] == IODEPTH) {
-        while (queued[type]) {
-            queued[type] -= spdk_nvme_qpair_process_completions(target.qpair[type], 0);
-        }
+
+    while (!is_completed) {
+        spdk_nvme_qpair_process_completions(target.qpair[type], 0);
     }
 
     return 0;

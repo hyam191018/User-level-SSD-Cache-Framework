@@ -50,7 +50,7 @@ static int shutdown_mg_worker(void) {
     shared_cache->mg_worker = 0;
     return rc;
 }
-
+/*
 static void *writeback(void *arg) {
     struct timespec ts = {0, WRITEBACK_DELAY};
     void *dma_buf = alloc_dma_buffer(CACHE_BLOCK_SIZE);
@@ -92,7 +92,7 @@ static int shutdown_wb_worker(void) {
     shared_cache->wb_worker = 0;
     return res;
 }
-
+*/
 /* --------------------------------------------------- */
 
 static inline int LOG2(unsigned int n) { return (n > 1) ? (1 + LOG2(n >> 1)) : 0; }
@@ -133,7 +133,7 @@ int init_udm_cache(void) {
     shared_cache->cache_state.count = 0;
     return 0;
 }
-/*
+
 int link_udm_cache(void) {
     shared_cache = link_shm(SHM_CACHE_NAME, sizeof(struct cache));
     if (!shared_cache) {
@@ -143,12 +143,15 @@ int link_udm_cache(void) {
         printf("Error: link_udm_cache - shared cache uninitialized\n");
         return 1;
     }
-
+    if (init_spdk()) {
+        return 1;
+    }
     spinlock_lock(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count++;
     spinlock_unlock(&shared_cache->cache_state.lock);
     return 0;
 }
+
 int free_udm_cache(void) {
     if (!shared_cache) {
         printf("Error: free_udm_cache - shared cache uninitialized\n");
@@ -158,7 +161,7 @@ int free_udm_cache(void) {
         printf("Error: free_udm_cache - shared cache uninitialized\n");
         return 1;
     }
-
+    exit_spdk();
     spinlock_lock(&shared_cache->cache_state.lock);
     shared_cache->cache_state.count--;
     spinlock_unlock(&shared_cache->cache_state.lock);
@@ -169,7 +172,7 @@ int free_udm_cache(void) {
     shared_cache = NULL;
     return 0;
 }
-*/
+
 int exit_udm_cache(void) {
     if (!shared_cache) {
         printf("Error: exit_udm_cache - shared cache uninitialized\n");

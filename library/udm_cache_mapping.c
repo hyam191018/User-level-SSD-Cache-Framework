@@ -554,7 +554,7 @@ bool do_migration_work(mapping *mapping, void *dma_buf) {
     }
     return false;
 }
-
+/*
 bool do_writeback_work(mapping *mapping, void *dma_buf) {
     unsigned cblock;
     bool success = true;
@@ -568,7 +568,7 @@ bool do_writeback_work(mapping *mapping, void *dma_buf) {
     }
     return false;
 }
-
+*/
 /* --------------------------------------------------- */
 
 #define to_cache_page_index(page_index) (page_index >> 3)

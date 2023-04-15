@@ -20,14 +20,6 @@
 int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num);
 
 /**
- * @brief Link to mapping table
- * @param mapping - Address of mapping table
- * @return 0, if success
- *         non-zero, if fail
- */
-// int link_mapping(mapping *mapping);
-
-/**
  * @brief Information of mapping table
  * @param mapping - Address of mapping table
  * @return 0, if success
@@ -45,13 +37,14 @@ void info_mapping(mapping *mapping);
 bool do_migration_work(mapping *mapping, void *dma_buf);
 
 /**
+ * @deprecated 功能問題，先不使用
  * @brief Try to writeback
  * @param mapping - Address of mapping table
  * @param dma_buf - Allocated by alloc_dma_buf
  * @return true, if done a work
  *         false, if donothing
  */
-bool do_writeback_work(mapping *mapping, void *dma_buf);
+// bool do_writeback_work(mapping *mapping, void *dma_buf);
 
 /**
  * @brief Search hash table

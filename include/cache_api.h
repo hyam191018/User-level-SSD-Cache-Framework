@@ -32,14 +32,14 @@ int exit_udm_cache(void);
  * @return 0, if success
  *         non-zero, if fail
  */
-// int link_udm_cache(void);
+int link_udm_cache(void);
 
 /**
  * @brief Unmap share memory
  * @return 0, if success
  *         non-zero, if fail
  */
-// int free_udm_cache(void);
+int free_udm_cache(void);
 
 /**
  * @brief Force to unlink share memory, lockless (for debug)
