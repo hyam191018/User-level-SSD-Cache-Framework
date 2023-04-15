@@ -42,7 +42,6 @@ int unmap_shm(void* shm_ptr, size_t shm_size) {
 
 int unlink_shm(char* shm_name) {
     if (shm_unlink(shm_name) == -1) {
-        perror("unlink");
         return 1;
     }
     return 0;

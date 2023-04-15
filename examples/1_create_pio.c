@@ -10,13 +10,12 @@
  */
 
 int main(void) {
-    void *buffer = malloc(4096);
+    void *buffer1 = malloc(4096);
     void *buffer2 = malloc(4096);
     void *buffer3 = malloc(4096);
 
     // 建立PIO
-    struct pio *pio = create_pio("test", 0, 0, READ, buffer, 3);
-
+    struct pio *pio = create_pio("test", 0, 0, READ, buffer1, 3);
     append_pio(pio, buffer2);
     append_pio(pio, buffer3);
 
@@ -25,7 +24,7 @@ int main(void) {
 
     // 釋放PIO
     free_pio(pio);
-    free(buffer);
+    free(buffer1);
     free(buffer2);
     free(buffer3);
 

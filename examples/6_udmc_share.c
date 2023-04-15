@@ -4,6 +4,7 @@
 #include <time.h>
 #include <unistd.h>  // fork
 
+#include "cache_api.h"
 #include "shm.h"
 #include "spdk.h"
 #include "stdinc.h"
@@ -13,12 +14,29 @@
 /**
  * @author Hyam
  * @date 2023/04/15
- * @brief 測試多用戶存取SPDK
+ * @brief 測試多用戶存取udm-cache
  */
 
-const int test_time = 100;
-const int max_lba = 10;
-const int user_number = 10;
+const int test_time = 3000000;
+const int user_number = 3;
+
+#define EXCEPT 50  // 期望的 hit ratio
+#define FILE_NAME "testfile"
+const unsigned long long MAX_PAGE_INDEX =
+    (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT * 4ull);
+
+// 隨機4K讀寫
+static void send_pio(void* buffer) {
+    unsigned page_index = rand() % MAX_PAGE_INDEX;
+    operate operation = rand() % 2 ? READ : WRITE;
+    if (operation == WRITE) {
+        memset(buffer, 'A' + rand() % 25, PAGE_SIZE);
+    }
+    unsigned pio_cnt = 1;
+    struct pio* head = create_pio(FILE_NAME, 0, page_index, operation, buffer, pio_cnt);
+    submit_pio(head);
+    free_pio(head);
+}
 
 typedef struct {
     pthread_mutex_t lock;
@@ -45,27 +63,38 @@ static void admin_func(void) {
     // 取得lock
     share_lock* locks = (share_lock*)link_shm(SHM_LOCK, sizeof(share_lock));
 
-    // 初始化
-    printf("init_udm_cache\n");
+    // 初始化udm-cache
+    force_exit_udm_cache();
+    printf("init_udm_cache, rc = %d\n", init_udm_cache());
+    for (int i = 0; i < user_number; i++) {
+        sem_post(&locks->sem_user);
+    }
 
+    // 結束udm-cache
     sem_wait(&locks->sem_admin);
-    printf("exit_udm_cache\n");
-    exit_spdk();
+    info_udm_cache();
+    printf("exit_udm_cache, rc = %d\n", exit_udm_cache());
 }
 
 static void user_func(void) {
     // 取得lock
     share_lock* locks = (share_lock*)link_shm(SHM_LOCK, sizeof(share_lock));
 
+    // 等待admin完成
     sem_wait(&locks->sem_user);
-    printf("%d link_udm_cache\n", getpid());
+    printf("%d link_udm_cache, rc = %d\n", getpid(), link_udm_cache());
 
     // user function
+    void* buffer = alloc_dma_buffer(PAGE_SIZE);
+    for (int i = 0; i < test_time; i++) {
+        send_pio(buffer);
+    }
+    free_dma_buffer(buffer);
 
     // 結束
+    printf("%d free_udm_cache, rc = %d\n", getpid(), free_udm_cache());
     pthread_mutex_lock(&locks->lock);
     locks->user_count++;
-    printf("%d free_udm_cache\n", getpid());
     if (locks->user_count == user_number) {
         sem_post(&locks->sem_admin);
     }

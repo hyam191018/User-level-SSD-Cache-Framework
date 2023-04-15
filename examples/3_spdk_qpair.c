@@ -9,7 +9,7 @@
 /**
  *  @author Hyam
  *  @date 2023/04/02
- *  @brief SPDK 正向測試 寫入資料、讀出資料，multi-thread競爭
+ *  @brief 寫入資料、讀出資料，開多個qpair做存取
  */
 
 #define MAX_LBA 2097152
@@ -25,6 +25,7 @@ static void* admin_func(void* arg) {
         write_spdk(buf, lba, 8, IO_QUEUE);
         memset(buf, 0, PAGE_SIZE);
         read_spdk(buf, lba, 8, IO_QUEUE);
+        printf("%d rw lba %d\n", pthread_self(), lba);
     }
     return NULL;
 }
@@ -39,6 +40,7 @@ static void* mg_func(void* arg) {
         write_spdk(buf, lba, 8, MG_QUEUE);
         memset(buf, 0, PAGE_SIZE);
         read_spdk(buf, lba, 8, MG_QUEUE);
+        printf("%d rw lba %d\n", pthread_self(), lba);
     }
     return NULL;
 }

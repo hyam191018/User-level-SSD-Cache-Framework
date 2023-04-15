@@ -4,14 +4,17 @@
 /**
  *  @author Hyam
  *  @date 2023/04/13
- *  @brief 壓力測試 submit pio (randrw)
+ *  @brief 壓力測試 submit pio
  */
 
-#define ROUND 100000  // submit次數
-#define EXCEPT 50     // 期望的 hit ratio
+// 100w  50% 301s
+// 100w 100% 65s
+// 100w 200% 55s
+#define TEST_ROUND 1000000
+#define EXCEPT_HIT_RATIO 100
 #define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =
-    (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT * 4ull);
+    (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT_HIT_RATIO * 4ull);
 
 // 隨機4K讀寫
 static void send_pio(void* buffer) {
@@ -28,10 +31,11 @@ static void send_pio(void* buffer) {
 
 int main(int argc, char* argv[]) {
     // 開啟 udm-cache
+    force_exit_udm_cache();
     printf("%d init rc = %d\n", getpid(), init_udm_cache());
 
     void* buffer = alloc_dma_buffer(PAGE_SIZE);
-    for (int i = 0; i < ROUND; i++) {
+    for (int i = 0; i < TEST_ROUND; i++) {
         send_pio(buffer);
     }
     free_dma_buffer(buffer);
