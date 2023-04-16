@@ -9,7 +9,7 @@
 /**
  *  @author Hyam
  *  @date 2023/04/02
- *  @brief 寫入資料、讀出資料，開多個qpair做存取
+ *  @brief 寫入資料、讀出資料
  */
 
 #define ROUND 1000
