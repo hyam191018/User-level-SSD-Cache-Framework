@@ -3,14 +3,13 @@ ioengine=/home/hyam/spdk/build/fio/myspdk
 
 thread=1
 direct=1
-group_reporting=1
-bs=4k
 rw=randread
 time_based=1
-runtime=30
-filename=testfile
-
-[test]
+runtime=10
+iodepth=1
 size=1G
+
+[filename0]
+filename=testfile
 
 ;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myspdk/myspdk.fio

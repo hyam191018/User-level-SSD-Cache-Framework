@@ -1,0 +1,15 @@
+[global]
+ioengine=/home/hyam/spdk/build/fio/spdk_bdev
+spdk_json_conf=/home/hyam/udm-cache/fio/spdk_engines/bdev.json
+thread=1
+direct=1
+rw=randread
+time_based=1
+runtime=10
+iodepth=1
+size=1G
+
+[filename0]
+filename=Nvme0n1
+
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/spdk_engines/bdev.fio

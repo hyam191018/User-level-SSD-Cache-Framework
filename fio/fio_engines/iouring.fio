@@ -1,0 +1,15 @@
+[global]
+ioengine=io_uring
+thread=1
+direct=1
+iodepth=32
+rw=randread
+bs=4KB
+time_based=1
+runtime=10
+size=1G
+
+[filename0]
+filename=testfile
+
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/fio_engines/iouring.fio

@@ -1,6 +1,8 @@
 [global]
 ioengine=mmap
 thread=1
+direct=1
+iodepth=1
 rw=randread
 bs=4KB
 time_based=1
@@ -10,5 +12,5 @@ size=1MB
 [filename0]
 filename=testfile
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/test/mmap.fio
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/fio_engines/mmap.fio
 
