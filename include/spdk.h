@@ -16,7 +16,7 @@
 typedef enum { IO_QUEUE, MG_QUEUE } queue_type;
 
 /**
- * @brief Init spdk, find controller > create namespace > create qpair
+ * @brief Init spdk, find controller > create namespace > create qpairs
  * @return 0, if success
  *         non-zero, if fail
  */
@@ -29,7 +29,7 @@ int init_spdk(void);
 void exit_spdk(void);
 
 /**
- * @brief Get device info, must init spdk first
+ * @brief Get device info, after init_spdk
  * @param block_size - 512, 4096 bytes
  * @param device_size - Number of lba
  * @return No return value
