@@ -8,10 +8,10 @@ SPDK_ROOT_DIR := $(abspath $(CURDIR)/../../../spdk)
 include $(SPDK_ROOT_DIR)/mk/spdk.common.mk
 include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 
-FIO_PLUGIN := myfio
+FIO_PLUGIN := udm-cache
 
 C_SRCS := \
-myfio.c \
+fio_plugin.c \
 ../../library/pio.c \
 ../../library/spdk.c \
 ../../library/atomic.c \

@@ -1,5 +1,5 @@
 [global]
-ioengine=/home/hyam/spdk/build/fio/myfio
+ioengine=/home/hyam/spdk/build/fio/udm-cache
 
 thread=1
 direct=1
@@ -14,4 +14,4 @@ filename=testfile
 [test]
 size=500MB
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myfio/4K_randread.fio
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/udm-cache/randread_4KB.fio

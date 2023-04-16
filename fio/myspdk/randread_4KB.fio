@@ -12,4 +12,4 @@ size=1G
 [filename0]
 filename=testfile
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myspdk/myspdk.fio
+;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myspdk/randread_4KB.fio

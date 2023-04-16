@@ -1,6 +1,6 @@
 [global]
-ioengine=/home/hyam/spdk/build/fio/myfio
-filesize=1GB
+ioengine=/home/hyam/spdk/build/fio/udm-cache
+filesize=500MB
 filename=testfile
 
 thread=1

@@ -11,7 +11,7 @@ include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 FIO_PLUGIN := myspdk
 
 C_SRCS := \
-myspdk.c \
+fio_plugin.c \
 ../../library/spdk.c \
 
 CFLAGS += -I$(abspath $(CURDIR)/../../include)

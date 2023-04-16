@@ -8,17 +8,6 @@
 #include "fio.h"
 #include "optgroup.h"
 #include "spdk.h"
-#include "spdk/accel.h"
-#include "spdk/bdev.h"
-#include "spdk/bdev_zone.h"
-#include "spdk/env.h"
-#include "spdk/init.h"
-#include "spdk/log.h"
-#include "spdk/queue.h"
-#include "spdk/stdinc.h"
-#include "spdk/string.h"
-#include "spdk/thread.h"
-#include "spdk/util.h"
 #include "spdk_internal/event.h"
 
 // 開啟udm-cache
@@ -37,7 +26,7 @@ static int myfio_iomem_alloc(struct thread_data *td, size_t total_mem) {
     return td->orig_buffer == NULL;
 }
 
-static void myfio_iomem_free(struct thread_data *td) { spdk_dma_free(td->orig_buffer); }
+static void myfio_iomem_free(struct thread_data *td) { free_dma_buffer(td->orig_buffer); }
 
 // 開始做讀寫
 static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) {
