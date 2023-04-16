@@ -24,8 +24,8 @@
 //  5  user  20w  50%  10.5min
 // 10  user  10w  50%    23min
 //  5  user 100w  25%  65.5min
-const int test_time = 1000000;
-const int user_number = 5;
+const int test_time = 30000;
+const int user_number = 3;
 
 #define EXCEPT 25  // 期望的 hit ratio
 #define FILE_NAME "testfile"

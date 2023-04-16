@@ -10,8 +10,8 @@
 // 100w  50% 301s
 // 100w 100% 65s
 // 100w 200% 55s
-#define TEST_ROUND 1000000
-#define EXCEPT_HIT_RATIO 100
+#define TEST_ROUND 100000
+#define EXCEPT_HIT_RATIO 200
 #define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =
     (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT_HIT_RATIO * 4ull);

@@ -19,9 +19,9 @@
 // 100w  1 user 44s
 // 100w  3 user 130s
 // 100w 10 user 422s
-const int test_time = 10000;
+const int test_time = 30000;
+const int user_number = 3;
 const int max_lba = 1000;
-const int user_number = 10;
 
 typedef struct {
     pthread_mutex_t lock;

@@ -12,39 +12,39 @@
  *  @brief 寫入資料、讀出資料，開多個qpair做存取
  */
 
-#define MAX_LBA 1024
 #define ROUND 1000
+#define MAX_LBA 100
 
-static void* io_func(void* arg) {
-    void *buf, id;
+static void test_func(queue_type type) {
+    void *buf, *tid;
     unsigned lba;
+    buf = alloc_dma_buffer(PAGE_SIZE);
+    tid = malloc(PAGE_SIZE);
     for (int i = 0; i < ROUND; i++) {
-        buf = alloc_dma_buffer(PAGE_SIZE);
         lba = rand() % MAX_LBA;
         sprintf(buf, "%ld", pthread_self());
-        sprintf(id, "%ld", pthread_self());
-        write_spdk(buf, lba, 8, IO_QUEUE);
+        sprintf(tid, "%ld", pthread_self());
+        write_spdk(buf, lba, 8, type);
         memset(buf, 0, PAGE_SIZE);
-        read_spdk(buf, lba, 8, IO_QUEUE);
-        if (strcmp(buf, id)) {
-            printf("===================\n");
-            printf("| TEST SUCCESS %d |", i);
-            printf("===================\n");
-        } else {
+        read_spdk(buf, lba, 8, type);
+        trim_spdk(lba, 8, type);
+        if (strcmp(buf, tid)) {
             printf("===================\n");
             printf("|    TEST FAIL    |\n");
             printf("===================\n");
             exit(-1);
         }
     }
-    return NULL;
+    free_dma_buffer(buf);
+    free(tid);
 }
 
 int main(int argc, char* argv[]) {
     init_spdk();
     srand(time(NULL));
-    pthread_t admin;
-    pthread_create(&admin, NULL, &io_func, NULL);
-    pthread_join(admin, NULL);
+    test_func(IO_QUEUE);
+    printf("===================\n");
+    printf("|  TEST SUCCESS   |\n");
+    printf("===================\n");
     exit_spdk();
 }
