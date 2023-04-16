@@ -22,8 +22,8 @@ static void test_func(queue_type type) {
     tid = malloc(PAGE_SIZE);
     for (int i = 0; i < ROUND; i++) {
         lba = rand() % MAX_LBA;
-        sprintf(buf, "%ld", pthread_self());
-        sprintf(tid, "%ld", pthread_self());
+        sprintf(buf, "%ld", rand() % 1000000);
+        sprintf(tid, "%ld", rand() % 1000000);
         write_spdk(buf, lba, 8, type);
         memset(buf, 0, PAGE_SIZE);
         read_spdk(buf, lba, 8, type);
