@@ -33,7 +33,7 @@ int unmap_shm(void* shm_ptr, size_t shm_size);
 /**
  * @brief Unlink share memory
  * @return 0, if success
- *          non-zero, if fail
+ *         non-zero, if fail
  */
 int unlink_shm(char* shm_name);
 
