@@ -1,6 +1,5 @@
 #include "spdk.h"
 
-#include "atomic.h"
 #include "spdk/env.h"
 #include "spdk/nvme.h"
 
