@@ -9,14 +9,14 @@
 
 在root底下執行下列指令，確認裝置已綁定SPDK
 
-`[path_to_spdk]/scripts/setup.sh`
+`$ [path_to_spdk]/scripts/setup.sh`
 
 取得裝置資訊，並產生出config file，其中traddr為裝置位址
 
-`[path_to_spdk]/scripts/gen_nvme.sh --json-with-subsystems > bdev.json`
+`$ [path_to_spdk]/scripts/gen_nvme.sh --json-with-subsystems > bdev.json`
 
 ## Setup
-請先修改，將NVME_ADDR改成自己的目標裝置位址
+請先修改spdk.h，將NVME_ADDR改成自己的目標裝置位址
 
 `[path_to_udm-cache-v3]/include/spdk.h`
 
