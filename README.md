@@ -40,5 +40,22 @@
 
 ## examples
 
+### 1_create_pio 建立、釋放page io
+
+### 2_work_queue 模擬cache miss提交與接收promotion請求
+
+### 3_spdk_rw 以raw IO的方式，使用SPDK讀寫Nvme SSD
+
+### 4_submit_pio_4K 模擬user(page cache)發送submit_pio指令
+
+### 5_submit_pio_32K 模擬user(page cache)發送submit_pio指令，在write miss時，直接寫到SSD(optimaizable write)
+
+### 6_spdk_share 模擬mult-process同時向SPDK提交IO請求
+
+### 7_udmc_share 模擬mult-process同時使用udm-cache
+
+
+
+
 ### udmc_share.c
 
