@@ -40,30 +40,18 @@
 
 ## examples
 
-'create_pio':建立、釋放page io
+**create_pio**: 建立、釋放page io
 
-### work_queue 
+**work_queue**: 模擬cache miss提交與接收promotion請求
 
-模擬cache miss提交與接收promotion請求
+**spdk_rw**: 以raw IO的方式，使用SPDK讀寫Nvme SSD
 
-### spdk_rw 
+**submit_pio_4K**: 模擬user(page cache)發送submit_pio指令
 
-以raw IO的方式，使用SPDK讀寫Nvme SSD
+**submit_pio_32K**: 模擬user(page cache)發送submit_pio指令，在write miss時，直接寫到SSD(optimaizable write)
 
-### submit_pio_4K 
+**spdk_share**: 模擬mult-process同時向SPDK提交IO請求
 
-模擬user(page cache)發送submit_pio指令
-
-### submit_pio_32K 
-
-模擬user(page cache)發送submit_pio指令，在write miss時，直接寫到SSD(optimaizable write)
-
-### spdk_share 
-
-模擬mult-process同時向SPDK提交IO請求
-
-### udmc_share 
-
-模擬mult-process同時使用udm-cache
+**udmc_share**: 模擬mult-process同時使用udm-cache
 
 
