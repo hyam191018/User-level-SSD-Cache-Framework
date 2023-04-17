@@ -7,8 +7,7 @@
 ## Installation
 下載FIO，請參考[FIO](https://github.com/axboe/fio)
 下載SPDK，請參考[SPDK安裝步驟](https://spdk.io/doc/getting_started.html)
-
-執行下列指令，確認裝置已綁定SPDK
+在root底下執行下列指令，確認裝置已綁定SPDK
 
 `spdk/scripts/setup.sh`
 
@@ -24,6 +23,10 @@
 修改其他參數(如cache大小)
 
 `udm-cache/include/config.h`
+
+## fio
+執行fio測試
+`$ sudo [fio] [udm-cache]/fio/udm-cache/full_bench.fio`
 
 ## examples
 
