@@ -10,15 +10,30 @@
 #include "spdk.h"
 #include "spdk_internal/event.h"
 
+// 清理udm-cache
+static int myfio_setup(struct thread_data *td) {
+    printf("setup\n");
+    force_exit_udm_cache();
+    return 0;
+}
+
 // 開啟udm-cache
+static bool isinit = false;
 static int myfio_init(struct thread_data *td) {
-    printf("exit rc = %d\n", exit_udm_cache());
-    printf("init rc = %d\n", init_udm_cache());
+    printf("init\n");
+    if (!isinit) {
+        printf("init rc = %d\n", init_udm_cache());
+        isinit = true;
+    }
+
     return 0;
 }
 
 // 關閉udm-cache
-static void myfio_cleanup(struct thread_data *td) { info_udm_cache(); }
+static void myfio_cleanup(struct thread_data *td) {
+    printf("cleanup\n");
+    info_udm_cache();
+}
 
 // 改成自己配置的malloc
 static int myfio_iomem_alloc(struct thread_data *td, size_t total_mem) {
@@ -47,11 +62,6 @@ static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) 
             break;
     }
     free_pio(head);
-    return 0;
-}
-
-static int myfio_setup(struct thread_data *td) {
-    force_exit_udm_cache();
     return 0;
 }
 
