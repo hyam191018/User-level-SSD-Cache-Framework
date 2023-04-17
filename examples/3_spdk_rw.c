@@ -1,10 +1,12 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/sem.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
 
 #include "spdk.h"
-#include "stdinc.h"
 
 /**
  *  @author Hyam
@@ -14,6 +16,7 @@
 
 #define ROUND 1000
 #define MAX_LBA 100
+#define PAGE_SIZE 4096
 
 static void test_func(queue_type type) {
     void *buf, *tmp;

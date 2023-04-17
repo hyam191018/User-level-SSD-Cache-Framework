@@ -7,8 +7,6 @@
  *  @brief 使用SPDK存取 cache device
  */
 
-#include "config.h"
-
 /* spdk setting */
 #define NVME_ADDR "0000:04:00.0"
 #define IODEPTH 1
