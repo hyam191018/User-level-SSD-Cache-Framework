@@ -9,25 +9,34 @@
 
 在root底下執行下列指令，確認裝置已綁定SPDK
 
-`spdk/scripts/setup.sh`
+`[spdk]/scripts/setup.sh`
 
 取得裝置資訊，並產生出config file，其中traddr為裝置位址
 
-`spdk/scripts/gen_nvme.sh --json-with-subsystems > bdev.json`
+`[spdk]/scripts/gen_nvme.sh --json-with-subsystems > bdev.json`
 
 ## Setup
 請先修改，將NVME_ADDR改成自己的目標裝置位址
 
-`udm-cache-v3/include/spdk.h`
+`[udm-cache-v3]/include/spdk.h`
 
 修改其他參數(如cache大小)
 
-`udm-cache/include/config.h`
+`[udm-cache-v3]/include/config.h`
 
 ## fio
+
+修改Makefile內spdk的路徑，執行make後，udm-cache的fio engine會出現在spdk的資料夾內
+
+`[spdk]/build/fio/udm-cache`
+
+修改full_bench.fio內engine的路徑
+
+`ioengine=[spdk]/build/fio/udm-cache`
+
 執行fio測試
 
-`$ sudo [fio] [udm-cache]/fio/udm-cache/full_bench.fio`
+`$ sudo [fio] [udm-cache-v3]/fio/udm-cache/full_bench.fio`
 
 ## examples
 
