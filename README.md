@@ -16,9 +16,9 @@
 `spdk/scripts/gen_nvme.sh --json-with-subsystems > bdev.json`
 
 ## Setup
-請先修改udm-cache-v3/include/spdk.h，將NVME_ADDR改成自己的目標裝置
+請先修改，將NVME_ADDR改成自己的目標裝置位址
 
-`#define NVME_ADDR "0000:04:00.0"`
+`udm-cache-v3/include/spdk.h`
 
 修改其他參數(如cache大小)
 
