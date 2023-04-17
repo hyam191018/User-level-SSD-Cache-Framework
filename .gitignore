@@ -7,5 +7,7 @@
 .vscode
 perf*
 main*
+test*
+file*
 source
 testfile
