@@ -16,19 +16,19 @@
 #define MAX_LBA 100
 
 static void test_func(queue_type type) {
-    void *buf, *tid;
+    void *buf, *tmp;
     unsigned lba;
     buf = alloc_dma_buffer(PAGE_SIZE);
-    tid = malloc(PAGE_SIZE);
+    tmp = malloc(PAGE_SIZE);
     for (int i = 0; i < ROUND; i++) {
         lba = rand() % MAX_LBA;
-        sprintf(buf, "%ld", rand() % 1000000);
-        sprintf(tid, "%ld", rand() % 1000000);
-        write_spdk(buf, lba, 8, type);
+        sprintf(buf, "%d", rand() % 1000000);
+        strcpy(tmp, buf);
+        write_spdk(buf, lba, 8, type);  // 寫進SSD
         memset(buf, 0, PAGE_SIZE);
-        read_spdk(buf, lba, 8, type);
-        trim_spdk(lba, 8, type);
-        if (strcmp(buf, tid)) {
+        read_spdk(buf, lba, 8, type);  // 重新讀出來
+        trim_spdk(lba, 8, type);       // trim
+        if (strcmp(buf, tmp)) {        // 比較
             printf("===================\n");
             printf("|    TEST FAIL    |\n");
             printf("===================\n");
@@ -36,11 +36,11 @@ static void test_func(queue_type type) {
         }
     }
     free_dma_buffer(buf);
-    free(tid);
+    free(tmp);
 }
 
 int main(int argc, char* argv[]) {
-    init_spdk();
+    init_spdk();  //
     srand(time(NULL));
     test_func(IO_QUEUE);
     printf("===================\n");
