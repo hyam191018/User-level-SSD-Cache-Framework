@@ -71,6 +71,16 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
                                 unsigned *cblock);
 
 /**
+ * @brief Remove and free cached entry
+ * @param mapping - Address of mapping table
+ * @param full_path_name - Key
+ * @param page_index - Key
+ * @return true, if success
+ *         false, if cache miss
+ */
+bool remove_mapping(mapping *mapping, char *full_path_name, unsigned page_index);
+
+/**
  * @brief Set an entry dirty or clean, the entry must in hash table
  * @param mapping - Address of mapping table
  * @param cblock - Which cache block to setup

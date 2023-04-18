@@ -130,6 +130,14 @@ static int overwritable(struct pio *pio) {
 
 static int optimizable(struct pio *pio) { return pio->operation == WRITE && overwritable(pio); }
 
+static int discard_pio(struct cache *cache, struct pio *pio) {
+    if (!check_pio(pio)) {
+        return 1;
+    }
+
+    return remove_mapping(&cache->cache_map, pio->full_path_name, pio->page_index);
+}
+
 static int map_pio(struct cache *cache, struct pio *pio) {
     if (!check_pio(pio)) {
         return 1;
@@ -154,7 +162,7 @@ static int map_pio(struct cache *cache, struct pio *pio) {
 
 int _submit_pio(struct cache *cache, struct pio *pio) {
     if (pio->operation == DISCARD) {
-        return 1;
+        return discard_pio(cache, pio);
     }
     return map_pio(cache, pio);
 }

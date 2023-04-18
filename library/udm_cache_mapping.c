@@ -628,6 +628,19 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
     return (e != NULL);
 }
 
+bool remove_mapping(mapping *mapping, char *full_path_name, unsigned page_index) {
+    spinlock_lock(&mapping->mapping_lock);
+
+    struct entry *e = h_lookup(&mapping->table, full_path_name, to_cache_page_index(page_index));
+    if (e) {
+        l_del(&mapping->es, entry_get_dirty(e) ? &mapping->dirty : &mapping->clean, e);
+        h_remove(&mapping->table, e);
+        free_entry(&mapping->ea, e);
+    }
+    spinlock_unlock(&mapping->mapping_lock);
+    return (e != NULL);
+}
+
 void set_dirty_after_write(mapping *mapping, unsigned *cblock, bool dirty) {
     spinlock_lock(&mapping->mapping_lock);
 
