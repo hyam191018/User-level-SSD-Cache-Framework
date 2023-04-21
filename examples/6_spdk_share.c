@@ -9,6 +9,7 @@
 #include "stdinc.h"
 
 #define SHM_LOCK "/shm_lock"
+#define PAGE_SIZE 4096
 
 /**
  * @author Hyam
