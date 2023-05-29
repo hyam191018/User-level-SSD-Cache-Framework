@@ -195,3 +195,98 @@ int trim_spdk(unsigned long offset_block, unsigned num_block, queue_type type) {
     }
     return rc;
 }
+
+/* --------------------------------------------------- */
+
+struct io_req {
+    bool is_completed;
+    unsigned iov_offset;
+    struct iovec *iovs;
+    int iov_pos;  // 目標iov
+    int iov_cnt;  // iov總數
+};
+
+static void init_req(struct io_req *req, struct iovec *iov, int iovcnt) {
+    req->is_completed = false;
+    req->iovs = iov;
+    req->iov_pos = 0;
+    req->iov_cnt = iovcnt;
+}
+
+static void cb_fn(void *ctx, const struct spdk_nvme_cpl *cpl) {
+    struct io_req *req = (struct io_req *)ctx;
+    req->is_completed = true;
+}
+
+static void reset_sgl_fn(void *ref, uint32_t sgl_offset) {
+    struct io_req *req = (struct io_req *)ref;
+    struct iovec *iov;
+    req->iov_offset = sgl_offset;
+    for (req->iov_pos = 0; req->iov_pos < req->iov_cnt; req->iov_pos++) {
+        iov = &req->iovs[req->iov_pos];
+        if (req->iov_offset < iov->iov_len) {
+            break;
+        }
+        req->iov_offset -= iov->iov_len;
+    }
+}
+static int next_sge_fn(void *ref, void **address, uint32_t *length) {
+    struct io_req *req = (struct io_req *)ref;
+    struct iovec *iov;
+
+    iov = &req->iovs[req->iov_pos];
+
+    *address = iov->iov_base;
+    *length = iov->iov_len;
+
+    if (req->iov_offset) {
+        *address += req->iov_offset;
+        *length -= req->iov_offset;
+    }
+
+    req->iov_offset += *length;
+    if (req->iov_offset == iov->iov_len) {
+        req->iov_pos++;
+        req->iov_offset = 0;
+    }
+
+    return 0;
+}
+
+int readv_spdk(struct iovec *iov, int iov_cnt, unsigned long offset_block, unsigned num_block,
+               queue_type type) {
+    int rc = 0;
+    struct io_req req;
+    init_req(&req, iov, iov_cnt);
+    rc = spdk_nvme_ns_cmd_readv(target.ns, target.qpair[type], offset_block, num_block, cb_fn, &req,
+                                0, reset_sgl_fn, next_sge_fn);
+
+    if (rc) {
+        fprintf(stderr, "starting write I/O failed\n");
+        return rc;
+    }
+
+    while (!req.is_completed) {
+        spdk_nvme_qpair_process_completions(target.qpair[type], 0);
+    }
+    return 0;
+}
+
+int writev_spdk(struct iovec *iov, int iov_cnt, unsigned long offset_block, unsigned num_block,
+                queue_type type) {
+    int rc = 0;
+    struct io_req req;
+    init_req(&req, iov, iov_cnt);
+    rc = spdk_nvme_ns_cmd_writev(target.ns, target.qpair[type], offset_block, num_block, cb_fn,
+                                 &req, 0, reset_sgl_fn, next_sge_fn);
+
+    if (rc) {
+        fprintf(stderr, "starting write I/O failed\n");
+        return rc;
+    }
+
+    while (!req.is_completed) {
+        spdk_nvme_qpair_process_completions(target.qpair[type], 0);
+    }
+    return 0;
+}

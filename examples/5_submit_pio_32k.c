@@ -8,8 +8,9 @@
  */
 
 // 100w  50% 11.5min
-#define TEST_ROUND 100000
-#define EXCEPT_HIT_RATIO 200
+// user vector -> 100w 50% 5.5min
+#define TEST_ROUND 1000000
+#define EXCEPT_HIT_RATIO 50
 #define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =
     (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT_HIT_RATIO * 4ull);

@@ -19,18 +19,18 @@ static int write_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
         (cblock << cache->cache_map.block_per_cblock_shift) +
         ((pio->page_index & MOD_PAGE_PER_CBLOCK_SHIFT) << cache->cache_dev.block_per_page_shift);
     int rc;
-    while (pio) {
-        rc = write_spdk(pio->buffer, target_block, 1 << cache->cache_dev.block_per_page_shift,
-                        IO_QUEUE);
-        target_block += 1 << cache->cache_dev.block_per_page_shift;
-        if (rc) {
-            return rc;
-        }
-        pio = pio->next;
+    int iov_cnt = pio->pio_cnt;
+    struct iovec *iovs = malloc(sizeof(struct iovec) * iov_cnt);
+    pio_to_iovec(pio, iovs, iov_cnt);
+    rc = writev_spdk(iovs, iov_cnt, target_block, iov_cnt << cache->cache_dev.block_per_page_shift,
+                     IO_QUEUE);
+    if (rc) {
+        free(iovs);
+        return rc;
     }
-
     set_dirty_after_write(&cache->cache_map, &cblock, true);
-    return 0;
+    free(iovs);
+    return rc;
 }
 
 static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
@@ -38,17 +38,17 @@ static int read_cache(struct cache *cache, struct pio *pio, unsigned cblock) {
         (cblock << cache->cache_map.block_per_cblock_shift) +
         ((pio->page_index & MOD_PAGE_PER_CBLOCK_SHIFT) << cache->cache_dev.block_per_page_shift);
     int rc;
-    while (pio) {
-        rc = read_spdk(pio->buffer, target_block, 1 << cache->cache_dev.block_per_page_shift,
-                       IO_QUEUE);
-        target_block += 1 << cache->cache_dev.block_per_page_shift;
-        if (rc) {
-            return rc;
-        }
-        pio = pio->next;
+    int iov_cnt = pio->pio_cnt;
+    struct iovec *iovs = malloc(sizeof(struct iovec) * iov_cnt);
+    pio_to_iovec(pio, iovs, iov_cnt);
+    rc = readv_spdk(iovs, iov_cnt, target_block, iov_cnt << cache->cache_dev.block_per_page_shift,
+                    IO_QUEUE);
+    if (rc) {
+        free(iovs);
+        return rc;
     }
-
-    return 0;
+    free(iovs);
+    return rc;
 }
 
 static int write_origin(struct cache *cache, struct pio *pio) {

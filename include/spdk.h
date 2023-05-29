@@ -8,6 +8,7 @@
  */
 
 /* spdk setting */
+#include "stdinc.h"
 #define NVME_ADDR "0000:04:00.0"
 #define IODEPTH 1
 #define QPAIR_COUNT 2
@@ -80,5 +81,31 @@ int write_spdk(void* dma_buf, unsigned long offset_block, unsigned num_block, qu
  *         non-zero, if fail
  */
 int trim_spdk(unsigned long offset_block, unsigned num_block, queue_type type);
+
+/**
+ * @brief Read from SPDK with iovector
+ * @param iov - iovector with PAGE_SIZE
+ * @param iov_cnt - Number of iovector
+ * @param offset_block - Start lba to perform io
+ * @param num_block - length of block to read
+ * @param type - queue for different threads
+ * @return 0, if success
+ *         non-zero, if fail
+ */
+int readv_spdk(struct iovec* iov, int iov_cnt, unsigned long offset_block, unsigned num_block,
+               queue_type type);
+
+/**
+ * @brief Write to SPDK with iovector
+ * @param iov - iovector with PAGE_SIZE
+ * @param iov_cnt - Number of iovector
+ * @param offset_block - Start lba to perform io
+ * @param num_block - length of block to write
+ * @param type - queue for different threads
+ * @return 0, if success
+ *         non-zero, if fail
+ */
+int writev_spdk(struct iovec* iov, int iov_cnt, unsigned long offset_block, unsigned num_block,
+                queue_type type);
 
 #endif

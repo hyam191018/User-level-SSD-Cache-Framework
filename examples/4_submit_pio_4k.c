@@ -4,14 +4,19 @@
 /**
  *  @author Hyam
  *  @date 2023/04/13
+ *  @date 2023/05/29 (modify)
  *  @brief 壓力測試 submit pio 4KB
  */
 
 // 100w  50% 301s
 // 100w 100% 65s
 // 100w 200% 55s
-#define TEST_ROUND 100000
-#define EXCEPT_HIT_RATIO 200
+// after iovector
+// 100w  50% 219s (應該要更慢才對吧? 測量日期問題?)
+// 100w 100% 64s
+// 100w 200% 54s
+#define TEST_ROUND 1000000
+#define EXCEPT_HIT_RATIO 100
 #define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =
     (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT_HIT_RATIO * 4ull);
