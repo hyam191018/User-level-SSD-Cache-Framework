@@ -610,8 +610,13 @@ bool lookup_mapping_with_insert(mapping *mapping, char *full_path_name, unsigned
     } else {
         mapping->miss_time++;
         // 若沒有在work queue，且free entry還有
-        if (contains_work(&mapping->wq, full_path_name, to_cache_page_index(page_index)) ||
-            allocator_empty(&mapping->ea)) {
+        if (contains_work(&mapping->wq, full_path_name, to_cache_page_index(page_index))) {
+            spinlock_unlock(&mapping->mapping_lock);
+            return NULL;
+        }
+        if (allocator_empty(&mapping->ea)) {
+            // 告知udm-cache，將其搬移到SSD
+            insert_work(&mapping->wq, full_path_name, to_cache_page_index(page_index));
             spinlock_unlock(&mapping->mapping_lock);
             return NULL;
         }
