@@ -5,9 +5,10 @@ thread=1
 direct=1
 rw=randread
 time_based=1
-runtime=10
+runtime=20
 iodepth=1
-size=1G
+size=512MB
+bs=32KB
 
 [filename0]
 filename=testfile

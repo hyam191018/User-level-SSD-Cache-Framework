@@ -1,16 +1,18 @@
 [global]
 ioengine=psync
+
 thread=1
 direct=1
 iodepth=1
-rw=randread
-bs=4KB
+size=128MB
 time_based=1
 runtime=10
-size=1GB
+
+rw=randread
+bs=4K
 
 [filename0]
-filename=testfile
+filename=/mnt/cache/testfile
 
 ;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/fio_engines/psync.fio
 

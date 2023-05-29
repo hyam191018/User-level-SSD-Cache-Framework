@@ -1,17 +1,13 @@
 [global]
 ioengine=/home/hyam/spdk/build/fio/udm-cache
-
-thread=1
 direct=1
-group_reporting=1
-
 bs=4k
-rw=randread
+rw=write
 time_based=1
-runtime=20
-filename=testfile
+runtime=60
+filename=/mnt/hdd/testfile
 
 [test]
-size=500MB
+size=128MB
 
 ;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/udm-cache/randread_4KB.fio

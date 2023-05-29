@@ -3,11 +3,13 @@ ioengine=/home/hyam/spdk/build/fio/spdk_nvme
 
 thread=1
 direct=1
-rw=randread
-time_based=1
-runtime=10
 iodepth=1
-size=1G
+size=128MB
+time_based=1
+runtime=20
+
+rw=randwrite
+bs=4K
 
 [filename0]
 filename=trtype=PCIe traddr=0000.04.00.0 ns=1
