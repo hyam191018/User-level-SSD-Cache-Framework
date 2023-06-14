@@ -152,13 +152,13 @@ int link_udm_cache(void) {
     return 0;
 }
 
-int free_udm_cache(void) {
+int unlink_udm_cache(void) {
     if (!shared_cache) {
-        printf("Error: free_udm_cache - shared cache uninitialized\n");
+        printf("Error: unlink_udm_cache - shared cache uninitialized\n");
         return 1;
     }
     if (!shared_cache->cache_state.running) {
-        printf("Error: free_udm_cache - shared cache uninitialized\n");
+        printf("Error: unlink_udm_cache - shared cache uninitialized\n");
         return 1;
     }
     exit_spdk();
