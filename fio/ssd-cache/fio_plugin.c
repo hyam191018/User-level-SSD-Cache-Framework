@@ -10,29 +10,29 @@
 #include "spdk.h"
 #include "spdk_internal/event.h"
 
-// 清理udm-cache
+// 清理ssd-cache
 static int myfio_setup(struct thread_data *td) {
     printf("setup\n");
-    force_exit_udm_cache();
+    force_exit_ssd_cache();
     return 0;
 }
 
-// 開啟udm-cache
+// 開啟ssd-cache
 static bool isinit = false;
 static int myfio_init(struct thread_data *td) {
     printf("init\n");
     if (!isinit) {
-        printf("init rc = %d\n", init_udm_cache());
+        printf("init rc = %d\n", init_ssd_cache());
         isinit = true;
     }
 
     return 0;
 }
 
-// 關閉udm-cache
+// 關閉ssd-cache
 static void myfio_cleanup(struct thread_data *td) {
     printf("cleanup\n");
-    info_udm_cache();
+    info_ssd_cache();
 }
 
 // 改成自己配置的malloc

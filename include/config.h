@@ -14,7 +14,7 @@ typedef enum { PROMOTION, DEMOTION, WRITEBACK } mg_type;
 #define CACHE_BLOCK_SIZE (1 << CBLOCK_SHIFT)
 
 #define CACHE_BLOCK_NUMBER (1 << 15)  // 32K x 32KB = 1GB (cache device size)
-#define BUCKETS_NUMBER (CACHE_BLOCK_NUMBER)
+#define BUCKETS_NUMBER (CACHE_BLOCK_NUMBER << 2)
 
 #define PAGE_SHIFT 12  // The default page size is 4KB
 #define PAGE_SIZE (1 << PAGE_SHIFT)

@@ -14,7 +14,7 @@
 /**
  * @author Hyam
  * @date 2023/04/15
- * @brief 測試多用戶存取udm-cache
+ * @brief 測試多用戶存取ssd-cache
  */
 
 //  1  user 100w  50%     299s
@@ -70,17 +70,17 @@ static void admin_func(void) {
     // 取得lock
     share_lock* locks = (share_lock*)link_shm(SHM_LOCK, sizeof(share_lock));
 
-    // 初始化udm-cache
-    force_exit_udm_cache();
-    printf("init_udm_cache, rc = %d\n", init_udm_cache());
+    // 初始化ssd-cache
+    force_exit_ssd_cache();
+    printf("init_ssd_cache, rc = %d\n", init_ssd_cache());
     for (int i = 0; i < user_number; i++) {
         sem_post(&locks->sem_user);
     }
 
-    // 結束udm-cache
+    // 結束ssd-cache
     sem_wait(&locks->sem_admin);
-    info_udm_cache();
-    printf("exit_udm_cache, rc = %d\n", exit_udm_cache());
+    info_ssd_cache();
+    printf("exit_ssd_cache, rc = %d\n", exit_ssd_cache());
 }
 
 static void user_func(void) {
@@ -89,7 +89,7 @@ static void user_func(void) {
 
     // 等待admin完成
     sem_wait(&locks->sem_user);
-    printf("%d link_udm_cache, rc = %d\n", getpid(), link_udm_cache());
+    printf("%d link_ssd_cache, rc = %d\n", getpid(), link_ssd_cache());
 
     // user function
     void* buffer = alloc_dma_buffer(PAGE_SIZE);
@@ -99,7 +99,7 @@ static void user_func(void) {
     free_dma_buffer(buffer);
 
     // 結束
-    printf("%d free_udm_cache, rc = %d\n", getpid(), free_udm_cache());
+    printf("%d unlink_ssd_cache, rc = %d\n", getpid(), unlink_ssd_cache());
     pthread_mutex_lock(&locks->lock);
     locks->user_count++;
     if (locks->user_count == user_number) {

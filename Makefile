@@ -11,9 +11,9 @@ C_SRCS := \
 ./library/spdk.c \
 ./library/atomic.c \
 ./library/work_queue.c \
-./library/udm_cache_api.c  \
-./library/udm_cache_target.c \
-./library/udm_cache_mapping.c \
+./library/ssd_cache_api.c  \
+./library/ssd_cache_target.c \
+./library/ssd_cache_mapping.c \
 
 CFLAGS += -I$(abspath $(CURDIR)/include)
 CFLAGS += -g -O2

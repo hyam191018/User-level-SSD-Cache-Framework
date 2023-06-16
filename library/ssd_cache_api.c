@@ -97,7 +97,7 @@ static int shutdown_wb_worker(void) {
 
 static inline int LOG2(unsigned int n) { return (n > 1) ? (1 + LOG2(n >> 1)) : 0; }
 
-int init_udm_cache(void) {
+int init_ssd_cache(void) {
     shared_cache = alloc_shm(SHM_CACHE_NAME, sizeof(struct cache));
     if (!shared_cache) {
         return 1;
@@ -134,7 +134,7 @@ int init_udm_cache(void) {
     return 0;
 }
 
-int link_udm_cache(void) {
+int link_ssd_cache(void) {
     shared_cache = link_shm(SHM_CACHE_NAME, sizeof(struct cache));
     if (!shared_cache) {
         return 1;
@@ -152,7 +152,7 @@ int link_udm_cache(void) {
     return 0;
 }
 
-int unlink_udm_cache(void) {
+int unlink_ssd_cache(void) {
     if (!shared_cache) {
         printf("Error: unlink_udm_cache - shared cache uninitialized\n");
         return 1;
@@ -173,7 +173,7 @@ int unlink_udm_cache(void) {
     return 0;
 }
 
-int exit_udm_cache(void) {
+int exit_ssd_cache(void) {
     if (!shared_cache) {
         printf("Error: exit_udm_cache - shared cache uninitialized\n");
         return 1;
@@ -205,13 +205,13 @@ int exit_udm_cache(void) {
     return 0;
 }
 
-void force_exit_udm_cache(void) {
+void force_exit_ssd_cache(void) {
     // shutdown_wb_worker();
     shutdown_mg_worker();
     unlink_shm(SHM_CACHE_NAME);
 }
 
-void info_udm_cache(void) {
+void info_ssd_cache(void) {
     if (!shared_cache) {
         printf("Error: info_udm_cache - shared cache uninitialized\n");
         return;

@@ -16,7 +16,7 @@
 // 100w 100% 64s
 // 100w 200% 54s
 #define TEST_ROUND 1000000
-#define EXCEPT_HIT_RATIO 100
+#define EXCEPT_HIT_RATIO 200
 #define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =
     (CACHE_BLOCK_NUMBER * CACHE_BLOCK_SIZE * 100ull) / (1024 * EXCEPT_HIT_RATIO * 4ull);
@@ -35,9 +35,9 @@ static void send_pio(void* buffer) {
 }
 
 int main(int argc, char* argv[]) {
-    // 開啟 udm-cache
-    force_exit_udm_cache();
-    printf("%d init rc = %d\n", getpid(), init_udm_cache());
+    // 開啟 ssd-cache
+    force_exit_ssd_cache();
+    printf("%d init rc = %d\n", getpid(), init_ssd_cache());
 
     void* buffer = alloc_dma_buffer(PAGE_SIZE);
     for (int i = 0; i < TEST_ROUND; i++) {
@@ -45,8 +45,8 @@ int main(int argc, char* argv[]) {
     }
     free_dma_buffer(buffer);
 
-    // 關閉 udm-cache
-    info_udm_cache();
-    printf("%d exit rc = %d\n", getpid(), exit_udm_cache());
+    // 關閉 ssd-cache
+    info_ssd_cache();
+    printf("%d exit rc = %d\n", getpid(), exit_ssd_cache());
     return 0;
 }

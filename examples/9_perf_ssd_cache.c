@@ -56,9 +56,9 @@ static void send_pio(void *buffer) {
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
-    // 開啟 udm-cache
-    force_exit_udm_cache();
-    init_udm_cache();
+    // 開啟 ssd-cache
+    force_exit_ssd_cache();
+    init_ssd_cache();
 
     void *buffer = alloc_dma_buffer(PAGE_SIZE);
     // 執行1000k次運算
@@ -66,9 +66,9 @@ int main(int argc, char *argv[]) {
         send_pio(buffer);
     }
 
-    // 關閉 udm-cache
+    // 關閉 ssd-cache
     free_dma_buffer(buffer);
-    info_udm_cache();
-    exit_udm_cache();
+    info_ssd_cache();
+    exit_ssd_cache();
     return 0;
 }

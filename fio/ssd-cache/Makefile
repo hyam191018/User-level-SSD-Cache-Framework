@@ -8,7 +8,7 @@ SPDK_ROOT_DIR := $(abspath $(CURDIR)/../../../spdk)
 include $(SPDK_ROOT_DIR)/mk/spdk.common.mk
 include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 
-FIO_PLUGIN := udm-cache
+FIO_PLUGIN := ssd-cache
 
 C_SRCS := \
 fio_plugin.c \
@@ -17,9 +17,9 @@ fio_plugin.c \
 ../../library/atomic.c \
 ../../library/shm.c \
 ../../library/work_queue.c \
-../../library/udm_cache_api.c  \
-../../library/udm_cache_target.c \
-../../library/udm_cache_mapping.c \
+../../library/ssd_cache_api.c  \
+../../library/ssd_cache_target.c \
+../../library/ssd_cache_mapping.c \
 
 CFLAGS += -I$(abspath $(CURDIR)/../../include)
 CFLAGS += -g -O2
