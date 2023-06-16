@@ -1,4 +1,4 @@
-# User-space Device Mapper Cache
+# User-level SSD Cache
 
 ## Introduction
 
