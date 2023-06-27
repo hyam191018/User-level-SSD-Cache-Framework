@@ -12,5 +12,5 @@ size=1GB
 [filename0]
 filename=testfile
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/fio_engines/null.fio
+;sudo /home/hyam/fio/fio /home/hyam/ssd-cache/fio/fio_engines/null.fio
 

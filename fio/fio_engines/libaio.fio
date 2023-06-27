@@ -7,10 +7,10 @@ rw=randread
 bs=4KB
 time_based=1
 runtime=10
-size=1G
+size=1GB
 
 [filename0]
 filename=testfile
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/fio_engines/libaio.fio
+;sudo /home/hyam/fio/fio /home/hyam/ssd-cache/fio/fio_engines/libaio.fio
 
