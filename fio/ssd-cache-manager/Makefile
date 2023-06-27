@@ -8,20 +8,22 @@ SPDK_ROOT_DIR := $(abspath $(CURDIR)/../../../spdk)
 include $(SPDK_ROOT_DIR)/mk/spdk.common.mk
 include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 
-FIO_PLUGIN := ssd-cache
+FIO_PLUGIN := ssd-cache-manager
 
+
+# 自己修改 ssd-cache_4KB || ssd-cache_32KB
 C_SRCS := \
-fio_plugin.c \
-../../library/pio.c \
-../../library/spdk.c \
-../../library/atomic.c \
-../../library/shm.c \
-../../library/work_queue.c \
-../../library/ssd_cache_api.c  \
-../../library/ssd_cache_target.c \
-../../library/ssd_cache_mapping.c \
+ssd-cache-manager.c \
+../../lib/pio.c \
+../../lib/spdk.c \
+../../lib/atomic.c \
+../../lib/shm.c \
+../../lib/work_queue.c \
+../../lib/ssd_cache_api.c  \
+../../lib/ssd_cache_target.c \
+../../lib/ssd_cache_mapping.c \
 
-CFLAGS += -I$(abspath $(CURDIR)/../../include)
+CFLAGS += -I$(abspath $(CURDIR)/../../inc)
 CFLAGS += -g -O2
 
 SPDK_LIB_LIST = $(ALL_MODULES_LIST) event event_bdev

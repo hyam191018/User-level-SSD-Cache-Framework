@@ -12,7 +12,7 @@
 
 // 清理ssd-cache
 static int myfio_setup(struct thread_data *td) {
-    printf("setup\n");
+    printf(" --------- setup --------- \n");
     force_exit_ssd_cache();
     return 0;
 }
@@ -20,7 +20,7 @@ static int myfio_setup(struct thread_data *td) {
 // 開啟ssd-cache
 static bool isinit = false;
 static int myfio_init(struct thread_data *td) {
-    printf("init\n");
+    printf(" --------- init --------- \n");
     if (!isinit) {
         printf("init rc = %d\n", init_ssd_cache());
         isinit = true;
@@ -31,13 +31,14 @@ static int myfio_init(struct thread_data *td) {
 
 // 關閉ssd-cache
 static void myfio_cleanup(struct thread_data *td) {
-    printf("cleanup\n");
+    printf(" --------- cleanup --------- \n");
     info_ssd_cache();
 }
 
 // 改成自己配置的malloc
 static int myfio_iomem_alloc(struct thread_data *td, size_t total_mem) {
-    td->orig_buffer = alloc_dma_buffer(PAGE_SIZE);
+    printf(" --------- iomem_alloc --------- \n");
+    td->orig_buffer = alloc_dma_buffer(PAGE_SIZE << 3);
     return td->orig_buffer == NULL;
 }
 
@@ -49,12 +50,18 @@ static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) 
     switch (io_u->ddir) {
         case DDIR_READ:
             head = create_pio(io_u->file->file_name, io_u->file->fd, io_u->offset >> 12, READ,
-                              io_u->xfer_buf, 1);
+                              io_u->xfer_buf, io_u->buflen == 4096 ? 1 : 8);
+            for (unsigned long long offset = 0; offset < io_u->buflen; offset += PAGE_SIZE) {
+                append_pio(head, io_u->xfer_buf + offset);
+            }
             submit_pio(head);
             break;
         case DDIR_WRITE:
             head = create_pio(io_u->file->file_name, io_u->file->fd, io_u->offset >> 12, WRITE,
-                              io_u->xfer_buf, 1);
+                              io_u->xfer_buf, io_u->buflen == 4096 ? 1 : 8);
+            for (unsigned long long offset = 0; offset < io_u->buflen; offset += PAGE_SIZE) {
+                append_pio(head, io_u->xfer_buf + offset);
+            }
             submit_pio(head);
             break;
         default:
