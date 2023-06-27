@@ -11,10 +11,10 @@ include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 FIO_PLUGIN := myspdk
 
 C_SRCS := \
-fio_plugin.c \
-../../library/spdk.c \
+myspdk.c \
+../../lib/spdk.c \
 
-CFLAGS += -I$(abspath $(CURDIR)/../../include)
+CFLAGS += -I$(abspath $(CURDIR)/../../inc)
 CFLAGS += -g -O2
 
 SPDK_LIB_LIST = $(ALL_MODULES_LIST) event event_bdev
