@@ -15,7 +15,7 @@
 // 100w  50% 219s (應該要更慢才對吧? 測量日期問題?)
 // 100w 100% 64s
 // 100w 200% 54s
-#define TEST_ROUND 1000000
+#define TEST_ROUND 200000
 #define EXCEPT_HIT_RATIO 200
 #define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =

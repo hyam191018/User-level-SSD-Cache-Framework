@@ -9,7 +9,7 @@
 
 // 100w  50% 11.5min
 // user vector -> 100w 50% 5.5min
-#define TEST_ROUND 500000
+#define TEST_ROUND 200000
 #define EXCEPT_HIT_RATIO 200
 #define FILE_NAME "testfile"
 const unsigned long long MAX_PAGE_INDEX =

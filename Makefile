@@ -5,17 +5,17 @@ include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 APP = main
 
 C_SRCS := \
-./source/main.c \
-./library/pio.c \
-./library/shm.c \
-./library/spdk.c \
-./library/atomic.c \
-./library/work_queue.c \
-./library/ssd_cache_api.c  \
-./library/ssd_cache_target.c \
-./library/ssd_cache_mapping.c \
+./main.c \
+./lib/pio.c \
+./lib/shm.c \
+./lib/spdk.c \
+./lib/atomic.c \
+./lib/work_queue.c \
+./lib/ssd_cache_api.c  \
+./lib/ssd_cache_target.c \
+./lib/ssd_cache_mapping.c \
 
-CFLAGS += -I$(abspath $(CURDIR)/include)
+CFLAGS += -I$(abspath $(CURDIR)/inc)
 CFLAGS += -g -O2
 
 SPDK_LIB_LIST = $(ALL_MODULES_LIST) event event_bdev

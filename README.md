@@ -2,56 +2,9 @@
 
 ## Introduction
 
-
-
-## Installation
-請先參考[FIO](https://github.com/axboe/fio)，[SPDK安裝步驟](https://spdk.io/doc/getting_started.html)
-
-在root底下執行下列指令，確認裝置已綁定SPDK
-
-`$ [path_to_spdk]/scripts/setup.sh`
-
-取得裝置資訊，並產生出config file，其中traddr為裝置位址
-
-`$ [path_to_spdk]/scripts/gen_nvme.sh --json-with-subsystems > bdev.json`
-
-## Setup
-請先修改spdk.h，將NVME_ADDR改成自己的目標裝置位址
-
-`[path_to_udm-cache-v3]/include/spdk.h`
-
-修改其他參數(如cache大小)
-
-`[path_to_udm-cache-v3]/include/config.h`
-
-## fio
-
-修改Makefile內spdk的路徑，執行make後，udm-cache的fio engine會出現在spdk的資料夾內
-
-`[path_to_spdk]/build/fio/udm-cache`
-
-修改full_bench.fio內engine的路徑
-
-`ioengine=[path_to_spdk]/build/fio/udm-cache`
-
-執行fio測試
-
-`$ sudo [path_to_fio] [path_to_udm-cache-v3]/fio/udm-cache/full_bench.fio`
-
-## examples
-
-1. **create_pio** - 建立、釋放page io
-
-2. **work_queue** - 模擬cache miss提交與接收promotion請求
-
-3. **spdk_rw** - 以raw IO的方式，使用SPDK讀寫Nvme SSD
-
-4. **submit_pio_4K** - 模擬user(page cache)發送submit_pio指令
-
-5. **submit_pio_32K** - 模擬user(page cache)發送submit_pio指令，在write miss時，直接寫到SSD(optimaizable write)
-
-6. **spdk_share** - 模擬mult-process同時向SPDK提交IO請求
-
-7. **udmc_share** - 模擬mult-process同時使用udm-cache
+請修改Makefile指向SPDK目錄
+再修改inc/spdk.h的 #define NVME_ADDR "0000:04:00.0"
+然後到inc/config.h設置參數
+最後複製examples的code到main，執行Make
 
 
