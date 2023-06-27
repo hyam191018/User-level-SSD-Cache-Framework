@@ -1,16 +1,15 @@
 [global]
 ioengine=/home/hyam/spdk/build/fio/myspdk
-
 thread=1
 direct=1
-rw=randread
-time_based=1
-runtime=20
 iodepth=1
-size=512MB
-bs=32KB
+rw=randread
+bs=4KB
+time_based=1
+runtime=10
+size=1GB
 
-[filename0]
+[job1]
 filename=testfile
 
-;sudo /home/hyam/fio/fio /home/hyam/udm-cache/fio/myspdk/randread_4KB.fio
+;sudo /home/hyam/fio/fio /home/hyam/ssd-cache/fio/myspdk/randread_4KB.fio
