@@ -3,11 +3,11 @@ ioengine=/home/hyam/spdk/build/fio/ssd-cache-manager
 thread=1
 direct=1
 iodepth=1
-rw=randread
+rw=randwrite
 bs=4KB
 time_based=1
-runtime=120
-size=1GB
+runtime=3600
+size=4GB
 
 [job1]
 filename=testfile
