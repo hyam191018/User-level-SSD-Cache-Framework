@@ -23,8 +23,8 @@ struct entry {
 
 struct entry_space {
     struct entry entrys[CACHE_BLOCK_NUMBER];
-    struct entry* begin;
-    struct entry* end;
+    unsigned begin;
+    unsigned end;
 };
 
 struct ilist {
@@ -33,14 +33,12 @@ struct ilist {
 };
 
 struct entry_alloc {
-    struct entry_space* es;
     unsigned begin;
     unsigned nr_allocated;
     struct ilist free;
 };
 
 struct hash_table {
-    struct entry_space* es;
     unsigned long long hash_bits;
     unsigned buckets[BUCKETS_NUMBER];
 };
