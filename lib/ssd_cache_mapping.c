@@ -345,9 +345,9 @@ int init_mapping(mapping *mapping, unsigned block_size, unsigned cblock_num) {
 void info_mapping(mapping *mapping) {
     spinlock_lock(&mapping->mapping_lock);
     printf("---> Information of mapping table <---\n");
-    printf("/ free  entrys = %u\n", mapping->ea.free.nr_elts);
-    printf("/ clean entrys = %u\n", mapping->clean.nr_elts);
-    printf("/ dirty entrys = %u\n", mapping->dirty.nr_elts);
+    printf("/ free  entry = %u\n", mapping->ea.free.nr_elts);
+    printf("/ clean entry = %u\n", mapping->clean.nr_elts);
+    printf("/ dirty entry = %u\n", mapping->dirty.nr_elts);
     printf("/ promotion time = %u\n", mapping->promotion_time);
     printf("/ demotion  time = %u\n", mapping->demotion_time);
     printf("/ writeback time = %u\n", mapping->writeback_time);

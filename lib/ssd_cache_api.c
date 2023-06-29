@@ -221,9 +221,9 @@ void info_ssd_cache(void) {
         return;
     }
     printf("---> Information of cache device <---\n");
-    printf("/ block_size = %uBytes\n", shared_cache->cache_dev.block_size);
-    printf("/ device_size = %luGB\n", shared_cache->cache_dev.device_size / 1000000000);
-    printf("/ cache_block_num = %u\n", shared_cache->cache_dev.cache_block_num);
+    printf("/ block size = %u Bytes\n", shared_cache->cache_dev.block_size);
+    printf("/ device size = %lu GB\n", shared_cache->cache_dev.device_size / 1000000000);
+    printf("/ cache block num = %u\n", shared_cache->cache_dev.cache_block_num);
     info_mapping(&shared_cache->cache_map);
 }
 
