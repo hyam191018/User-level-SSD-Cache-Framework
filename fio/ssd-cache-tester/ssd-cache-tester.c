@@ -46,7 +46,8 @@ static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) 
         case DDIR_READ:
             head = create_pio(io_u->file->file_name, io_u->file->fd, io_u->offset >> 12, READ,
                               io_u->xfer_buf, io_u->buflen == 4096 ? 1 : 8);
-            for (unsigned long long offset = 0; offset < io_u->buflen; offset += PAGE_SIZE) {
+            for (unsigned long long offset = PAGE_SIZE; offset < io_u->buflen;
+                 offset += PAGE_SIZE) {
                 append_pio(head, io_u->xfer_buf + offset);
             }
             submit_pio(head);
@@ -54,7 +55,8 @@ static enum fio_q_status myfio_queue(struct thread_data *td, struct io_u *io_u) 
         case DDIR_WRITE:
             head = create_pio(io_u->file->file_name, io_u->file->fd, io_u->offset >> 12, WRITE,
                               io_u->xfer_buf, io_u->buflen == 4096 ? 1 : 8);
-            for (unsigned long long offset = 0; offset < io_u->buflen; offset += PAGE_SIZE) {
+            for (unsigned long long offset = PAGE_SIZE; offset < io_u->buflen;
+                 offset += PAGE_SIZE) {
                 append_pio(head, io_u->xfer_buf + offset);
             }
             submit_pio(head);
