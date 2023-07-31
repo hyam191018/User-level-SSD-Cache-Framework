@@ -7,10 +7,10 @@ SPDK_ROOT_DIR := $(abspath $(CURDIR)/../spdk)
 include $(SPDK_ROOT_DIR)/mk/spdk.common.mk
 include $(SPDK_ROOT_DIR)/mk/spdk.modules.mk
 
-APP = main
+APP = app
 
 C_SRCS := \
-./main.c \
+./testing.c \
 ./lib/pio.c \
 ./lib/shm.c \
 ./lib/spdk.c \
