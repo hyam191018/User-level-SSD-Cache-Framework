@@ -16,6 +16,8 @@
 
 ## 執行fio
 
+修改Makefile，並編譯後，需再修改job file(.fio)的ioengines位置
+
 1. fio_engines為fio提供之ioengines
 
 2. spdk_engines為SDPK提供之ioengines(SPDK將其稱為fio_plugin)
