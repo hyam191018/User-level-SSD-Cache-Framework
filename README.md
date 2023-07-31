@@ -24,7 +24,7 @@
 
 3. myspdk與為作者編寫之ioengines，用於測試spdk.c與spdk.h
 
-4. ssd-cache-manager可直接執行(程式本身除執行fio測試外，還須自己維護mapping、migration worker等)
+4. ssd-cache-manager除執行fio測試外，還須自己維護mapping、migration worker等)
 
-5. ssd-cache-client須配合examples/8_command_line執行，ssd-cache-client只需專注在fio測試上。
+5. ssd-cache-client須配合examples/8_command_line執行(先啟動server，再執行ssd-cache-client的fio測試)，ssd-cache-client只需專注在fio測試上
 
