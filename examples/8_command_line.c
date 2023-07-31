@@ -8,6 +8,7 @@
  * @date 2023/06/27
  * @brief Server: init -> waiting -> exit
  *        Client: link -> submit  -> unlink
+ *        執行使請帶入參數 "server" 或是 "client"
  */
 
 // 隨機4K讀寫
