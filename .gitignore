@@ -3,11 +3,11 @@
 *.0
 *.pc
 *.sh
+app
 .clang-format
 .vscode
 perf*
 main*
-test*
 file*
 source
 testfile
