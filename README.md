@@ -2,6 +2,8 @@
 
 ## 安裝 (請先安裝好SPDK與fio)
 
+```git clone https://github.com/hyam191018/User-level_SSD_Cache_Framework.git```
+
 ## 執行examples
 
 1. 修改Makefile指向SPDK目錄
