@@ -1,13 +1,13 @@
-# User-level SSD Cache
+# User-level SSD Cache Framework
 
-## Run
+## 執行 (請先安裝好SPDK與fio)
 
-請修改Makefile指向SPDK目錄
+1. 修改Makefile指向SPDK目錄
 
-再修改inc/spdk.h的 #define NVME_ADDR "0000:04:00.0"
+2. 修改inc/spdk.h的#define NVME_ADDR，改為綁定SPDK的device PCIE address
 
-然後到inc/config.h設置參數
+3. 可修改inc/config.h的參數
 
-最後複製examples的code到main，執行Make
+4. 複製examples的code，並建立一個main.c，再執行Make
 
 
