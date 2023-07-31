@@ -16,4 +16,13 @@
 
 ## 執行fio
 
+1. fio_engines為fio提供之ioengines
+
+2. spdk_engines為SDPK提供之ioengines(SPDK將其稱為fio_plugin)
+
+3. myspdk與為作者編寫之ioengines，用於測試spdk.c與spdk.h
+
+4. ssd-cache-manager可直接執行(程式本身除執行fio測試外，還須自己維護mapping、migration worker等)
+
+5. ssd-cache-client須配合examples/8_command_line執行，ssd-cache-client只需專注在fio測試上。
 
