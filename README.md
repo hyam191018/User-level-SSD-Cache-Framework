@@ -24,6 +24,7 @@
 
 ### 實驗環境
 
+| -  | Configure |
 |:--:|:--:|
 | CPU | Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz |
 | RAM  | Transcend 32GB DDR4 3200 MT/s |
