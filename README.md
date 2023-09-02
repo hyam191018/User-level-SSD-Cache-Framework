@@ -6,11 +6,11 @@
 2. 修改inc/spdk.h的#define NVME_ADDR，改為綁定SPDK的device PCIE address
 3. 可修改inc/config.h的參數
 
-## examples
+## Examples
 
 複製examples的code到testing.c，執行Make後，將編譯出執行檔app
 
-## 執行fio
+## FIO
 
 修改Makefile，並編譯後，需再修改job file(.fio)的ioengines位置
 
