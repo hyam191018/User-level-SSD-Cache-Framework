@@ -1,4 +1,4 @@
-![image](https://github.com/hyam191018/User-level-SSD-Cache-Framework/assets/59702782/2dd104a4-7c1a-45f8-8502-6a15e8cbe331)# User-level SSD Cache Framework 
+# User-level SSD Cache Framework 
 
 ## 下載程式之後 (請先安裝好SPDK與fio)
 
@@ -47,10 +47,23 @@
 | seq. read, 32K  | 5.6K| 20.2K| 20.6K| 101%|
 | seq. read, 32K  | 4.8K| 38.2K| 44.9K| 117%|
 
-
 ### 性能測試 1
+
+單位:IOPS
+| operation/block size  | dm-cache | USC Framework | ratio |
+|:--:|:--:|:--:|:--:|
+| rand. read, 4K | 9.6K |  13.6K| 141% |
+| rand. read, 4K  |11.2K| 84.1K | 750% |
+| seq. read, 32K  | 6.4K| 7.3K| 114% |
+| seq. read, 32K  | 12.5K| 43.8K| 350% |
 
 ### 性能測試 2
 
-
+單位:IOPS, hit ratio
+| operation/block size  | dm-cache | USC Framework | ratio |
+|:--:|:--:|:--:|:--:|
+| rand. read, 4K | 205, 48% |  188, 49%| 91% |
+| rand. read, 4K  |225, 49%| 225, 49% | 113% |
+| seq. read, 32K  |5.7K, 41%| 7.2K, 38%| 124% |
+| seq. read, 32K  |1.4K, 47%| 3.1K, 50% | 221% |
 
