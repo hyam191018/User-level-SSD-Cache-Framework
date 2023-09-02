@@ -35,6 +35,19 @@
 |:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | 1 | True | 1 | 1GB | 1 min | HDD/SSD/SSD | PSYNC/PSYNC/SPDK | EXT4/EXT4/NONE |
 
+單位:IOPS
+| operation/block size  | PSYNC HDD | PSYNC SSD | SPDK SSD | ratio |
+|:--:|:--:|:--:|:--:|:--:|
+| rand. read, 4K | 146 |  13.0K| 13.7K| 105%|
+| rand. read, 4K  | 177| 64.0K | 84.8K | 132%|
+| seq. read, 4K  | 16.3K| 35.1K | 39.6K| 112%|
+| seq. read, 4K  | 14.6K | 64.1K| 84.8K| 132%|
+| rand. read, 32K  | 140|7.2K |7.5K | 104%|
+| rand. read, 32K  | 116| 38.1K| 44.9K| 117%|
+| seq. read, 32K  | 5.6K| 20.2K| 20.6K| 101%|
+| seq. read, 32K  | 4.8K| 38.2K| 44.9K| 117%|
+
+
 ### 性能測試 1
 
 ### 性能測試 2
