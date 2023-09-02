@@ -24,7 +24,7 @@
 
 ### 實驗環境
 
-|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+|:--:|:--:|
 | CPU | Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz |
 | RAM  | Transcend 32GB DDR4 3200 MT/s |
 | Origin device | TOSHIBA DT01ACA100 1TB |
