@@ -24,8 +24,8 @@
 
 ### 實驗環境
 
-| CPU | RAM | Origin device | Cache device | OS| Linux kernel|
-|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| CPU | RAM | Origin device | Cache device | OS | Linux kernel |
+|:--:|:--:|:--:|:--:|:--:|:--:|
 | Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz | Transcend 32GB DDR4 3200 MT/s | TOSHIBA DT01ACA100 1TB | WDS500G3X0C-00SJG0 500GB | Ubuntu 18.04.6 LTS | 5.4.0 | 
 
 ### 基準測試
