@@ -35,6 +35,18 @@
 
 ### 基準測試
 
+
+| -  | Param |
+|:--:|:--:|
+| Thread | 1 |
+| Direct IO  | True |
+| IO depth | 1 |
+| File size | 1GB |
+| Run time | 1min |
+| Block device | HDD |SSD |SSD |
+| IO engine | psync | psync | SPDK |
+| File system | EXT4 | EXT4 | - |
+
 ### 性能測試 1
 
 ### 性能測試 2
