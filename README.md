@@ -47,7 +47,7 @@
 | seq. read, 32K  | 5.6K| 20.2K| 20.6K| 101%|
 | seq. read, 32K  | 4.8K| 38.2K| 44.9K| 117%|
 
-### 性能測試 1
+### 性能測試 1 - 4GB SSD and 1GB File
 
 單位:IOPS
 | operation/block size  | dm-cache | USC Framework | ratio |
@@ -57,7 +57,7 @@
 | seq. read, 32K  | 6.4K| 7.3K| 114% |
 | seq. read, 32K  | 12.5K| 43.8K| 350% |
 
-### 性能測試 2
+### 性能測試 2 - 4GB SSD and 8GB File
 
 單位:IOPS, hit ratio
 | operation/block size  | dm-cache | USC Framework | ratio |
